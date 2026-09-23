@@ -328,9 +328,12 @@ class HSNLookupResponse(BaseModel):
     hsn_code: str
     found: bool
     desc: str
+    description: Optional[str] = None
     rate: float
     cess: Optional[float] = 0.0
     type: Optional[str] = "Goods"
+    chapter: Optional[str] = None
+
 
 
 class ITCCheckRequest(BaseModel):
