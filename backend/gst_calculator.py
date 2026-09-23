@@ -6,18 +6,38 @@ Tax Computation, GSTIN Validation, HSN Lookup, and Section 17(5) ITC Rules.
 from typing import Dict, Any, Optional, Tuple, List
 from datetime import datetime
 import re
+import os
+import json
 
-# Standard HSN / SAC directory for tax determination
+# Comprehensive HSN / SAC directory for tax determination
 COMMON_HSN_DIRECTORY = {
-    "9983": {"desc": "Information Technology, Software development & Consulting", "rate": 18.0, "type": "Service"},
-    "8471": {"desc": "Automatic data processing machines, computers & storage units", "rate": 18.0, "type": "Goods"},
-    "8517": {"desc": "Smartphones and telecommunication apparatus", "rate": 18.0, "type": "Goods"},
-    "6203": {"desc": "Men's or boys' suits, jackets, trousers and garments", "rate": 12.0, "type": "Goods"},
-    "1905": {"desc": "Bread, pastry, cakes, biscuits and other bakers' wares", "rate": 5.0, "type": "Goods"},
-    "9963": {"desc": "Accommodation, food and beverage services (Hotels/Restaurants)", "rate": 5.0, "type": "Service"},
-    "9971": {"desc": "Financial and insurance services", "rate": 18.0, "type": "Service"},
-    "8703": {"desc": "Motor cars and vehicles for transport of persons (Luxury)", "rate": 28.0, "cess": 15.0, "type": "Goods"},
+    "9983": {"desc": "Information Technology, Software development & Consulting", "rate": 18.0, "type": "Service", "chapter": "Chapter 99 - Services Accounting Code (SAC)"},
+    "8471": {"desc": "Automatic data processing machines, computers & storage units", "rate": 18.0, "type": "Goods", "chapter": "Chapter 84 - Machinery & Computers"},
+    "8517": {"desc": "Smartphones and telecommunication apparatus", "rate": 18.0, "type": "Goods", "chapter": "Chapter 85 - Electrical & Telecommunication"},
+    "6203": {"desc": "Men's or boys' suits, jackets, trousers and garments", "rate": 12.0, "type": "Goods", "chapter": "Chapter 62 - Apparel & Clothing"},
+    "4820": {"desc": "Registers, notebooks, paper stationery & exercise books", "rate": 12.0, "type": "Goods", "chapter": "Chapter 48 - Paper & Stationery"},
+    "2106": {"desc": "Food preparations not elsewhere specified", "rate": 18.0, "type": "Goods", "chapter": "Chapter 21 - Food Preparations"},
+    "1905": {"desc": "Bread, pastry, cakes, biscuits and other bakers' wares", "rate": 5.0, "type": "Goods", "chapter": "Chapter 19 - Cereals & Bakery"},
+    "9963": {"desc": "Accommodation, food and beverage services (Hotels/Restaurants)", "rate": 5.0, "type": "Service", "chapter": "Chapter 99 - Services Accounting Code (SAC)"},
+    "9971": {"desc": "Financial and insurance services", "rate": 18.0, "type": "Service", "chapter": "Chapter 99 - Services Accounting Code (SAC)"},
+    "8703": {"desc": "Motor cars and vehicles for transport of persons (Luxury)", "rate": 28.0, "cess": 15.0, "type": "Goods", "chapter": "Chapter 87 - Vehicles"},
 }
+
+CHAPTER_SLABS = {}
+
+# Load comprehensive tariff dataset if available
+_master_file = os.path.join(os.path.dirname(__file__), "..", "data", "hsn_master.json")
+try:
+    if os.path.exists(_master_file):
+        with open(_master_file, "r", encoding="utf-8") as f:
+            _loaded_data = json.load(f)
+            if "hsn_headings" in _loaded_data:
+                COMMON_HSN_DIRECTORY.update(_loaded_data["hsn_headings"])
+            if "chapters" in _loaded_data:
+                CHAPTER_SLABS = _loaded_data["chapters"]
+except Exception:
+    pass
+
 
 # Blocked credit keywords under Section 17(5) of CGST Act 2017
 SECTION_17_5_KEYWORDS = [
@@ -85,20 +105,88 @@ def validate_gstin(gstin: str) -> Dict[str, Any]:
 def lookup_hsn(code: str) -> Dict[str, Any]:
     """
     Look up classification, description, and standard rate for HSN/SAC codes.
+    Supports:
+    - 4-digit exact matches (e.g. '8471', '9983')
+    - 6-digit & 8-digit prefix matching (e.g. '8471.30.10' -> '8471')
+    - 2-digit Chapter tariff fallback (e.g. '84' -> Chapter 84)
+    - Returns both 'desc' and 'description' for full frontend & API compatibility.
     """
-    clean_code = str(code).strip()
-    if clean_code in COMMON_HSN_DIRECTORY:
-        data = COMMON_HSN_DIRECTORY[clean_code]
+    raw_code = str(code).strip()
+    digits_only = re.sub(r"[^0-9]", "", raw_code)
+
+    # 1. Exact match in comprehensive directory
+    if raw_code in COMMON_HSN_DIRECTORY:
+        data = COMMON_HSN_DIRECTORY[raw_code]
+        desc = data.get("desc") or data.get("description", "")
         return {
-            "hsn_code": clean_code,
+            "hsn_code": raw_code,
             "found": True,
-            **data
+            "desc": desc,
+            "description": desc,
+            "rate": float(data.get("rate", 18.0)),
+            "cess": float(data.get("cess", 0.0)),
+            "type": data.get("type", "Goods"),
+            "chapter": data.get("chapter", "")
         }
+
+    # 1b. Exact match on cleaned digits
+    if digits_only in COMMON_HSN_DIRECTORY:
+        data = COMMON_HSN_DIRECTORY[digits_only]
+        desc = data.get("desc") or data.get("description", "")
+        return {
+            "hsn_code": raw_code,
+            "found": True,
+            "desc": desc,
+            "description": desc,
+            "rate": float(data.get("rate", 18.0)),
+            "cess": float(data.get("cess", 0.0)),
+            "type": data.get("type", "Goods"),
+            "chapter": data.get("chapter", "")
+        }
+
+    # 2. Hierarchical prefix matching for 6-digit or 8-digit subheadings (e.g. 8471.30 -> 8471)
+    if len(digits_only) >= 4:
+        heading_4 = digits_only[:4]
+        if heading_4 in COMMON_HSN_DIRECTORY:
+            data = COMMON_HSN_DIRECTORY[heading_4]
+            desc = data.get("desc") or data.get("description", "")
+            return {
+                "hsn_code": raw_code,
+                "found": True,
+                "desc": f"{desc} (Classified under Heading {heading_4})",
+                "description": f"{desc} (Classified under Heading {heading_4})",
+                "rate": float(data.get("rate", 18.0)),
+                "cess": float(data.get("cess", 0.0)),
+                "type": data.get("type", "Goods"),
+                "chapter": data.get("chapter", "")
+            }
+
+    # 3. Chapter-level tariff match (first 2 digits)
+    if len(digits_only) >= 2:
+        ch_2 = digits_only[:2]
+        if ch_2 in CHAPTER_SLABS:
+            ch_data = CHAPTER_SLABS[ch_2]
+            title = ch_data.get("title", f"Tariff Chapter {ch_2}")
+            return {
+                "hsn_code": raw_code,
+                "found": True,
+                "desc": f"General commodities under Chapter {ch_2}: {title}",
+                "description": f"General commodities under Chapter {ch_2}: {title}",
+                "rate": float(ch_data.get("rate", 18.0)),
+                "cess": 0.0,
+                "type": ch_data.get("type", "Goods"),
+                "chapter": f"Chapter {ch_2} - {title}"
+            }
+
+    # 4. Standard residual fallback
     return {
-        "hsn_code": clean_code,
+        "hsn_code": raw_code,
         "found": False,
         "desc": "General Goods/Services (Standard 18% slab applies)",
-        "rate": 18.0
+        "description": "General Goods/Services (Standard 18% slab applies)",
+        "rate": 18.0,
+        "cess": 0.0,
+        "type": "Goods"
     }
 
 
