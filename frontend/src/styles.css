@@ -629,9 +629,280 @@ tr:hover td {
   border: 1px solid #a7f3d0;
 }
 
+.alert-danger {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
 @media (max-width: 900px) {
   .app { flex-direction: column; }
   .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
   .main { padding: 20px; }
   .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
 }
+
+/* ==============================================================================
+   PRINT & PDF EXPORT STYLES (GSTR-3B SUMMARY)
+   ============================================================================== */
+.print-only {
+  display: none;
+}
+
+@media print {
+  /* Set clean white page and reset margins */
+  @page {
+    margin: 15mm;
+    size: A4 portrait;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide navigation, forms, sidebars, buttons, and other views */
+  .sidebar,
+  .sidebar *,
+  .print-hide,
+  .header-row,
+  .card:not(.gstr3b-print-container),
+  .alert,
+  button {
+    display: none !important;
+  }
+
+  .app {
+    display: block !important;
+    min-height: auto !important;
+  }
+
+  .main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+  }
+
+  /* Style the printed GSTR-3B summary container */
+  .gstr3b-print-container {
+    box-shadow: none !important;
+    border: 1.5px solid #0f172a !important;
+    border-radius: 6px !important;
+    padding: 24px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    page-break-inside: avoid;
+  }
+
+  .print-grid {
+    display: grid !important;
+    grid-template-columns: 1.2fr 1fr !important;
+    gap: 20px !important;
+  }
+
+  .receipt-card {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    padding: 16px !important;
+  }
+
+  .print-only {
+    display: flex !important;
+  }
+
+  /* Ensure colors, borders, and badges print clearly */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin-animation {
+  animation: spin 1.2s linear infinite;
+}
+
+/* ==============================================================================
+   7. AUTHENTICATION & LOGIN/SIGNUP (UI PRO MAX)
+   ============================================================================== */
+.auth-viewport {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.12) 0%, rgba(248, 250, 252, 1) 70%),
+              linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  padding: 24px 16px;
+}
+
+.auth-container {
+  display: flex;
+  width: 100%;
+  max-width: 980px;
+  min-height: 620px;
+  background: #ffffff;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(226, 232, 240, 0.8);
+}
+
+.auth-showcase-pane {
+  flex: 1 1 45%;
+  background: linear-gradient(155deg, #090d16 0%, #0f172a 45%, #1e1b4b 100%);
+  color: #ffffff;
+  padding: 44px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-showcase-glow {
+  position: absolute;
+  top: -15%;
+  right: -15%;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.auth-form-pane {
+  flex: 1 1 55%;
+  padding: 44px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+}
+
+.auth-feature-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.auth-tab-btn {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #94a3b8;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.auth-input-field,
+input.auth-input-field,
+.auth-input-wrapper input {
+  width: 100%;
+  padding: 11px 14px 11px 42px !important;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.auth-input-wrapper input[type="password"],
+.auth-input-wrapper input.has-eye {
+  padding-right: 42px !important;
+}
+
+.auth-input-field:focus,
+.auth-input-wrapper input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  outline: none;
+}
+
+.auth-eye-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.auth-eye-btn:hover {
+  color: #475569;
+}
+
+@media (max-width: 860px) {
+  .auth-container {
+    flex-direction: column;
+    max-width: 480px;
+  }
+  .auth-showcase-pane {
+    padding: 30px 24px;
+  }
+  .auth-form-pane {
+    padding: 32px 24px;
+  }
+}
+
+/* ==============================================================================
+   8. STATS GRID & PROFILE STATS
+   ============================================================================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.stat-sub {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+@media (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -1,0 +1,16 @@
+# GSTSaathi — Dependencies
+
+fastapi>=0.115.0
+uvicorn>=0.30.0
+sqlalchemy>=2.0.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+python-multipart>=0.0.9
+
+# Azure AI SDKs
+azure-ai-projects>=2.3.0
+azure-identity>=1.15.0
+azure-ai-documentintelligence>=1.0.2
+azure-ai-textanalytics>=5.3.0
+openai<3
+

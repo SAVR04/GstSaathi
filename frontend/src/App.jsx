@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { Link, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import {
   LayoutDashboard,
   UploadCloud,
@@ -11,21 +11,41 @@ import {
   TrendingUp,
   FileText,
   Trash2,
-  Plus,
   Send,
-  Sparkles,
-  ArrowRight,
   RefreshCw,
   Clock,
   ShieldCheck,
+  Search,
+  Printer,
+  Sparkles,
+  RotateCcw,
+  Mail,
+  Lock,
+  LogOut,
+  Download,
   Building2,
-  ExternalLink
+  Eye,
+  EyeOff,
+  ArrowRight,
+  User
 } from "lucide-react";
 
-// API Base URL config
+// Base API endpoint for backend communications
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api/v1";
 
-// Currency formatter for Indian Rupees
+// Authenticated fetch wrapper that attaches Bearer token from localStorage
+function authFetch(url, options = {}) {
+  const token = localStorage.getItem("gstsaathi_token");
+  const headers = {
+    ...(options.headers || {}),
+  };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return fetch(url, { ...options, headers });
+}
+
+// Utility: Format numbers as Indian Rupees (INR)
 function formatINR(val) {
   if (val === undefined || val === null || isNaN(val)) return "₹0.00";
   return new Intl.NumberFormat("en-IN", {
@@ -35,41 +55,60 @@ function formatINR(val) {
   }).format(val);
 }
 
-// ---------------------------------------------------------
-// Navigation & Layout
-// ---------------------------------------------------------
-function Layout({ children }) {
+// ==============================================================================
+// 1. MAIN APP LAYOUT & PROFESSIONAL NAVIGATION
+// ==============================================================================
+function Layout({ children, currentUser, onLogout }) {
   const location = useLocation();
   const [backendAlive, setBackendAlive] = useState(true);
 
+  // Periodic heartbeat check to confirm backend connectivity
   useEffect(() => {
-    fetch(`${API_BASE}/invoices/stats`)
+    authFetch(`${API_BASE}/invoices/stats`)
       .then((res) => setBackendAlive(res.ok))
       .catch(() => setBackendAlive(false));
   }, [location.pathname]);
 
   const navItems = [
-    { to: "/", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/upload", label: "Upload Invoice", icon: UploadCloud },
-    { to: "/calculator", label: "GST Calculator", icon: CalcIcon },
-    { to: "/assistant", label: "AI Assistant", icon: Bot },
-    { to: "/review", label: "Filing Review", icon: FileCheck },
-    { to: "/azure-modules", label: "AI-103 Azure Modules", icon: Sparkles },
-    { to: "/audit", label: "Responsible AI Logs", icon: ShieldCheck },
+    { to: "/", label: "Dashboard & Invoices", icon: LayoutDashboard },
+    { to: "/calculator", label: "Tax Calculator & HSN", icon: CalcIcon },
+    { to: "/copilot", label: "AI Tax Saathi", icon: Bot },
+    { to: "/filing", label: "GSTR Return Filing", icon: FileCheck },
+    { to: "/advisor", label: "Legal Tax Advisory", icon: FileText },
+    { to: "/audit", label: "Audit Trail", icon: ShieldCheck },
+    { to: "/profile", label: "Taxpayer Profile & GSTIN", icon: User },
   ];
 
   return (
     <div className="app">
+      {/* Sidebar Navigation */}
       <aside className="sidebar">
         <div>
-          <div className="brand">
-            <div className="brand-icon">₹</div>
+          {/* Brand Header */}
+          <div className="brand" style={{ display: "flex", alignItems: "center", gap: 12, paddingBottom: 16 }}>
+            <img
+              src="/gstsaathilogo.jpeg"
+              alt="GSTSaathi Logo"
+              style={{
+                width: 42,
+                height: 42,
+                borderRadius: 10,
+                objectFit: "cover",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                flexShrink: 0
+              }}
+            />
             <div>
-              <div className="brand-title">GST Copilot</div>
-              <span className="brand-badge">Smart Tax OS</span>
+              <div className="brand-title" style={{ fontWeight: 800, fontSize: "1.2rem", letterSpacing: "-0.02em", color: "#0f172a" }}>
+                GSTSaathi
+              </div>
+              <span className="brand-badge" style={{ fontSize: "0.7rem", color: "#059669", background: "#ecfdf5", border: "1px solid #a7f3d0" }}>
+                Your AI Companion
+              </span>
             </div>
           </div>
 
+          {/* Navigation Links */}
           <nav>
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -88,28 +127,101 @@ function Layout({ children }) {
           </nav>
         </div>
 
+        {/* System Health & User Profile in Sidebar Footer */}
         <div className="sidebar-footer">
           <div className="status-indicator">
             <span
               className="dot"
               style={{ background: backendAlive ? "#059669" : "#dc2626" }}
             />
-            <span>{backendAlive ? "Backend Connected" : "Backend Offline"}</span>
+            <span>{backendAlive ? "System Operational" : "Backend Offline"}</span>
           </div>
-          <p style={{ marginTop: 8, fontSize: "0.75rem", color: "#94a3b8" }}>
-            FastAPI + SQLite Active
+          <p style={{ marginTop: 6, fontSize: "0.75rem", color: "#94a3b8" }}>
+            Cloud AI Engine: Connected
           </p>
+
+          {/* User Profile Card & Sign Out Button */}
+          {currentUser && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: "10px 12px",
+                background: "#f8fafc",
+                borderRadius: 10,
+                border: "1px solid #e2e8f0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
+              }}
+            >
+              <Link
+                to="/profile"
+                style={{
+                  minWidth: 0,
+                  flex: 1,
+                  textDecoration: "none",
+                  color: "inherit",
+                  cursor: "pointer"
+                }}
+                title="View & Edit Profile"
+              >
+                <div
+                  style={{
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    color: "#0f172a",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {currentUser.name || currentUser.username || "Apex Retail"}
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.72rem",
+                    color: currentUser.gstin ? "#64748b" : "#d97706",
+                    fontFamily: "monospace",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  {currentUser.gstin || "No GSTIN Added"}
+                </div>
+              </Link>
+              <button
+                type="button"
+                className="button button-outline button-sm"
+                onClick={onLogout}
+                title="Sign Out"
+                style={{
+                  padding: "5px 8px",
+                  color: "#dc2626",
+                  borderColor: "#fecaca",
+                  background: "#fff",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: "0.75rem",
+                }}
+              >
+                <LogOut size={13} />
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
+      {/* Main Content Area */}
       <main className="main">{children}</main>
     </div>
   );
 }
 
-// ---------------------------------------------------------
-// 1. Dashboard View
-// ---------------------------------------------------------
+// ==============================================================================
+// 2. DASHBOARD & SMART INVOICE INGESTION
+// (Utilizes Document Intelligence OCR for visual document extraction)
+// ==============================================================================
 function Dashboard() {
   const [stats, setStats] = useState({
     total_invoices: 0,
@@ -119,21 +231,22 @@ function Dashboard() {
     total_tax: 0,
   });
   const [invoices, setInvoices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [extractedInvoice, setExtractedInvoice] = useState(null);
+  const fileInputRef = useRef(null);
 
+  // Load ledger statistics and invoice records
   const loadData = async () => {
     try {
-      setLoading(true);
       const [statsRes, invRes] = await Promise.all([
-        fetch(`${API_BASE}/invoices/stats`),
-        fetch(`${API_BASE}/invoices`),
+        authFetch(`${API_BASE}/invoices/stats`),
+        authFetch(`${API_BASE}/invoices`),
       ]);
       if (statsRes.ok) setStats(await statsRes.json());
       if (invRes.ok) setInvoices(await invRes.json());
-    } catch (err) {
-      console.error("Failed to load dashboard data", err);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      console.error("Error loading dashboard data", e);
     }
   };
 
@@ -141,230 +254,28 @@ function Dashboard() {
     loadData();
   }, []);
 
-  const handleDelete = async (id) => {
-    try {
-      const res = await fetch(`${API_BASE}/invoices/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        loadData();
-      }
-    } catch (err) {
-      console.error("Failed to delete invoice", err);
-    }
-  };
+  // Upload and process invoice(s) through AI Document Intelligence
+  const handleFileUpload = async (fileOrFiles) => {
+    const fileList = Array.isArray(fileOrFiles)
+      ? fileOrFiles
+      : fileOrFiles
+      ? [fileOrFiles]
+      : [];
+    if (fileList.length === 0) return;
 
-  return (
-    <>
-      <div className="header-row">
-        <div>
-          <h1>GST Intelligence Dashboard</h1>
-          <p className="subtitle">
-            Real-time compliance monitoring, invoice ledger, and tax liabilities.
-          </p>
-        </div>
-        <button className="button button-outline button-sm" onClick={loadData}>
-          <RefreshCw size={14} /> Refresh Data
-        </button>
-      </div>
-
-      <div className="grid-4">
-        <div className="card stat-card">
-          <div className="stat-header">
-            <span>Total Invoices</span>
-            <div className="stat-icon" style={{ background: "#eef2ff", color: "#4338ca" }}>
-              <FileText size={18} />
-            </div>
-          </div>
-          <div className="stat-value">{stats.total_invoices}</div>
-          <div className="stat-subtext">Recorded in ledger</div>
-        </div>
-
-        <div className="card stat-card">
-          <div className="stat-header">
-            <span>Processed</span>
-            <div className="stat-icon" style={{ background: "#ecfdf5", color: "#059669" }}>
-              <CheckCircle2 size={18} />
-            </div>
-          </div>
-          <div className="stat-value">{stats.processed}</div>
-          <div className="stat-subtext">Verified & parsed</div>
-        </div>
-
-        <div className="card stat-card">
-          <div className="stat-header">
-            <span>Pending Review</span>
-            <div className="stat-icon" style={{ background: "#fffbeb", color: "#d97706" }}>
-              <Clock size={18} />
-            </div>
-          </div>
-          <div className="stat-value">{stats.pending_review}</div>
-          <div className="stat-subtext">Needs approval</div>
-        </div>
-
-        <div className="card stat-card">
-          <div className="stat-header">
-            <span>Total Tax Liability</span>
-            <div className="stat-icon" style={{ background: "#f5f3ff", color: "#7c3aed" }}>
-              <TrendingUp size={18} />
-            </div>
-          </div>
-          <div className="stat-value">{formatINR(stats.total_tax)}</div>
-          <div className="stat-subtext">On {formatINR(stats.total_sales)} sales</div>
-        </div>
-      </div>
-
-      <div className="card" style={{ marginBottom: 24 }}>
-        <h2>Quick Actions</h2>
-        <p style={{ color: "#64748b", marginBottom: 14, fontSize: "0.9rem" }}>
-          Execute compliance workflows with AI assistance and automated calculations.
-        </p>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <Link className="button" to="/upload">
-            <UploadCloud size={16} /> Upload New Invoice
-          </Link>
-          <Link className="button button-outline" to="/calculator">
-            <CalcIcon size={16} /> GST Tax Calculator
-          </Link>
-          <Link className="button button-outline" to="/assistant">
-            <Bot size={16} /> Ask AI Copilot
-          </Link>
-          <Link className="button button-outline" to="/review">
-            <FileCheck size={16} /> Review Filing Totals
-          </Link>
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="header-row" style={{ marginBottom: 16 }}>
-          <h2>Recent Invoice Ledger</h2>
-          <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
-            Showing {invoices.length} invoices
-          </span>
-        </div>
-
-        {loading ? (
-          <p style={{ color: "#94a3b8", padding: 20, textAlign: "center" }}>
-            Loading ledger...
-          </p>
-        ) : invoices.length === 0 ? (
-          <div style={{ textAlign: "center", padding: 40 }}>
-            <FileText size={40} color="#cbd5e1" style={{ marginBottom: 10 }} />
-            <p style={{ color: "#64748b" }}>No invoices found in database.</p>
-            <Link className="button button-sm" to="/upload" style={{ marginTop: 12 }}>
-              Upload Your First Invoice
-            </Link>
-          </div>
-        ) : (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Invoice #</th>
-                  <th>Seller GSTIN</th>
-                  <th>Buyer GSTIN</th>
-                  <th>Taxable Amt</th>
-                  <th>Rate</th>
-                  <th>Tax Breakdown</th>
-                  <th>Total Amount</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((inv) => (
-                  <tr key={inv.id}>
-                    <td>
-                      <strong>{inv.invoice_number}</strong>
-                    </td>
-                    <td><code style={{ fontSize: "0.8rem" }}>{inv.seller_gstin}</code></td>
-                    <td><code style={{ fontSize: "0.8rem" }}>{inv.buyer_gstin}</code></td>
-                    <td>{formatINR(inv.taxable_amount)}</td>
-                    <td>{inv.gst_rate}%</td>
-                    <td style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                      {inv.igst > 0 ? (
-                        <span>IGST: {formatINR(inv.igst)}</span>
-                      ) : (
-                        <span>CGST: {formatINR(inv.cgst)} | SGST: {formatINR(inv.sgst)}</span>
-                      )}
-                    </td>
-                    <td>
-                      <strong>{formatINR(inv.total_amount)}</strong>
-                    </td>
-                    <td>
-                      <span
-                        className={`badge ${
-                          inv.status === "processed"
-                            ? "badge-success"
-                            : "badge-warning"
-                        }`}
-                      >
-                        {inv.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        className="button button-danger button-sm"
-                        onClick={() => handleDelete(inv.id)}
-                        title="Delete invoice"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
-// ---------------------------------------------------------
-// 2. Invoice Upload View
-// ---------------------------------------------------------
-function Upload() {
-  const [dragOver, setDragOver] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [extractedInvoice, setExtractedInvoice] = useState(null);
-  const [manualMode, setManualMode] = useState(false);
-  const [recentInvoices, setRecentInvoices] = useState([]);
-  const fileInputRef = useRef(null);
-
-  // Manual Form State
-  const [manualForm, setManualForm] = useState({
-    invoice_number: `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-    taxable_amount: 15000,
-    gst_rate: 18,
-    transaction_type: "intra_state",
-    seller_gstin: "27AABCU9603R1ZM",
-    buyer_gstin: "07AAAAA0000A1Z5",
-  });
-
-  const loadRecent = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/invoices`);
-      if (res.ok) {
-        const list = await res.json();
-        setRecentInvoices(list.slice(0, 5));
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    loadRecent();
-  }, []);
-
-  const handleFileUpload = async (file) => {
-    if (!file) return;
     try {
       setUploading(true);
+      setUploadError(null);
+      setExtractedInvoice(null);
       const formData = new FormData();
-      formData.append("file", file);
+      fileList.forEach((f) => {
+        formData.append("files", f);
+      });
+      if (fileList.length === 1) {
+        formData.append("file", fileList[0]);
+      }
 
-      const res = await fetch(`${API_BASE}/invoices/upload`, {
+      const res = await authFetch(`${API_BASE}/invoices/upload`, {
         method: "POST",
         body: formData,
       });
@@ -372,45 +283,27 @@ function Upload() {
       if (res.ok) {
         const data = await res.json();
         setExtractedInvoice(data);
-        loadRecent();
+        loadData();
       } else {
-        alert("Upload processing failed");
+        const errData = await res.json().catch(() => ({}));
+        setUploadError(errData.detail || "Failed to process invoice with Azure Document Intelligence.");
+        console.error("Upload failed:", errData);
       }
     } catch (err) {
-      console.error(err);
-      alert("Error uploading file");
+      setUploadError(err.message || "Network error occurred while uploading.");
+      console.error("Upload error:", err);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleManualSubmit = async (e) => {
-    e.preventDefault();
+  // Delete invoice from ledger
+  const handleDelete = async (id) => {
     try {
-      setUploading(true);
-      const res = await fetch(`${API_BASE}/invoices`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...manualForm,
-          taxable_amount: parseFloat(manualForm.taxable_amount),
-          gst_rate: parseFloat(manualForm.gst_rate),
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setExtractedInvoice(data);
-        loadRecent();
-        // Reset invoice number for next
-        setManualForm({
-          ...manualForm,
-          invoice_number: `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        });
-      }
+      await authFetch(`${API_BASE}/invoices/${id}`, { method: "DELETE" });
+      loadData();
     } catch (err) {
-      console.error(err);
-    } finally {
-      setUploading(false);
+      console.error("Delete error:", err);
     }
   };
 
@@ -418,575 +311,528 @@ function Upload() {
     <>
       <div className="header-row">
         <div>
-          <h1>Invoice Ingestion & Extraction</h1>
+          <h1>GST Invoicing & Compliance Dashboard</h1>
           <p className="subtitle">
-            Upload tax invoices (PDF, JPG, PNG) for automated OCR parsing and ledger entry.
+            Automated document ingestion, real-time tax calculation, and digital ledger reconciliation.
           </p>
         </div>
-        <button
-          className="button button-outline button-sm"
-          onClick={() => setManualMode(!manualMode)}
-        >
-          {manualMode ? "Switch to File Upload" : "Enter Manually"}
+        <button className="button button-outline button-sm" onClick={loadData}>
+          <RefreshCw size={14} /> Refresh Data
         </button>
       </div>
 
-      <div className="grid-2">
-        {/* Left Column: Upload / Manual Entry Form */}
-        <div>
-          {!manualMode ? (
-            <div className="card">
-              <h3>Upload Invoice Document</h3>
-              <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: 16 }}>
-                Drop an invoice or select a file to simulate automated parsing and tax extraction.
-              </p>
-
-              <div
-                className={`dropzone ${dragOver ? "dragover" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragOver(false);
-                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    handleFileUpload(e.dataTransfer.files[0]);
-                  }
-                }}
-                onClick={() => fileInputRef.current.click()}
-              >
-                <div className="dropzone-icon">
-                  <UploadCloud size={28} />
-                </div>
-                <div>
-                  <strong style={{ fontSize: "1rem" }}>
-                    Click to browse or drag & drop invoice
-                  </strong>
-                  <p style={{ color: "#94a3b8", fontSize: "0.82rem", marginTop: 4 }}>
-                    Supported: PDF, JPG, JPEG, PNG (Max 15MB)
-                  </p>
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  style={{ display: "none" }}
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleFileUpload(e.target.files[0]);
-                    }
-                  }}
-                />
-              </div>
-
-              {uploading && (
-                <div style={{ textAlign: "center", padding: "16px 0", color: "#4338ca" }}>
-                  <RefreshCw className="spin" size={18} style={{ marginRight: 8 }} />
-                  Simulating OCR and parsing tax metadata...
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="card">
-              <h3>Manual Invoice Entry</h3>
-              <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: 16 }}>
-                Directly add an invoice to the GST ledger.
-              </p>
-              <form onSubmit={handleManualSubmit}>
-                <div className="form-group">
-                  <label>Invoice Number</label>
-                  <input
-                    type="text"
-                    required
-                    value={manualForm.invoice_number}
-                    onChange={(e) =>
-                      setManualForm({ ...manualForm, invoice_number: e.target.value })
-                    }
-                  />
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div className="form-group">
-                    <label>Seller GSTIN</label>
-                    <input
-                      type="text"
-                      value={manualForm.seller_gstin}
-                      onChange={(e) =>
-                        setManualForm({ ...manualForm, seller_gstin: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Buyer GSTIN</label>
-                    <input
-                      type="text"
-                      value={manualForm.buyer_gstin}
-                      onChange={(e) =>
-                        setManualForm({ ...manualForm, buyer_gstin: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  <div className="form-group">
-                    <label>Taxable Value (₹)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={manualForm.taxable_amount}
-                      onChange={(e) =>
-                        setManualForm({ ...manualForm, taxable_amount: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>GST Rate (%)</label>
-                    <select
-                      value={manualForm.gst_rate}
-                      onChange={(e) =>
-                        setManualForm({ ...manualForm, gst_rate: e.target.value })
-                      }
-                    >
-                      <option value="0">0% (Exempt)</option>
-                      <option value="5">5% (Essential)</option>
-                      <option value="12">12% (Standard I)</option>
-                      <option value="18">18% (Standard II)</option>
-                      <option value="28">28% (Luxury)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Transaction Type</label>
-                  <div className="radio-group">
-                    <div
-                      className={`radio-card ${
-                        manualForm.transaction_type === "intra_state" ? "selected" : ""
-                      }`}
-                      onClick={() =>
-                        setManualForm({ ...manualForm, transaction_type: "intra_state" })
-                      }
-                    >
-                      <span>Intra-State (CGST + SGST)</span>
-                    </div>
-                    <div
-                      className={`radio-card ${
-                        manualForm.transaction_type === "inter_state" ? "selected" : ""
-                      }`}
-                      onClick={() =>
-                        setManualForm({ ...manualForm, transaction_type: "inter_state" })
-                      }
-                    >
-                      <span>Inter-State (IGST)</span>
-                    </div>
-                  </div>
-                </div>
-
-                <button type="submit" className="button" style={{ width: "100%", marginTop: 8 }}>
-                  <Plus size={16} /> Save Invoice to Ledger
-                </button>
-              </form>
-            </div>
-          )}
+      {/* Summary KPI Cards */}
+      <div className="grid-4">
+        <div className="card stat-card">
+          <div className="stat-header">
+            <span>Total Invoices</span>
+            <FileText size={18} color="#4338ca" />
+          </div>
+          <div className="stat-value">{stats.total_invoices}</div>
+          <div className="stat-subtext">Active ledger entries</div>
         </div>
 
-        {/* Right Column: Extracted Invoice Preview */}
-        <div>
-          {extractedInvoice ? (
-            <div className="card">
-              <div className="header-row" style={{ marginBottom: 12 }}>
-                <h3>Extracted Tax Invoice</h3>
-                <span className="badge badge-success">
-                  <CheckCircle2 size={13} /> {extractedInvoice.status}
-                </span>
-              </div>
+        <div className="card stat-card">
+          <div className="stat-header">
+            <span>Verified Invoices</span>
+            <CheckCircle2 size={18} color="#059669" />
+          </div>
+          <div className="stat-value">{stats.processed}</div>
+          <div className="stat-subtext">AI OCR validated</div>
+        </div>
 
-              <div className="alert alert-success">
-                <CheckCircle2 size={18} />
-                <div>
-                  <strong>Successfully Parsed & Saved!</strong>
-                  <div style={{ fontSize: "0.82rem" }}>
-                    Invoice record #{extractedInvoice.id} committed to database.
-                  </div>
-                </div>
-              </div>
+        <div className="card stat-card">
+          <div className="stat-header">
+            <span>Pending Review</span>
+            <Clock size={18} color="#d97706" />
+          </div>
+          <div className="stat-value">{stats.pending_review}</div>
+          <div className="stat-subtext">Awaiting reconciliation</div>
+        </div>
 
-              <div className="receipt-card">
-                <div className="receipt-row">
-                  <span>Invoice Number</span>
-                  <strong>{extractedInvoice.invoice_number}</strong>
-                </div>
-                <div className="receipt-row">
-                  <span>Seller GSTIN</span>
-                  <code>{extractedInvoice.seller_gstin}</code>
-                </div>
-                <div className="receipt-row">
-                  <span>Buyer GSTIN</span>
-                  <code>{extractedInvoice.buyer_gstin}</code>
-                </div>
-                <div className="receipt-row">
-                  <span>Taxable Base</span>
-                  <span>{formatINR(extractedInvoice.taxable_amount)}</span>
-                </div>
-                <div className="receipt-row">
-                  <span>Applied GST Rate</span>
-                  <span>{extractedInvoice.gst_rate}%</span>
-                </div>
-                {extractedInvoice.igst > 0 ? (
-                  <div className="receipt-row">
-                    <span>IGST (Integrated Tax)</span>
-                    <span>{formatINR(extractedInvoice.igst)}</span>
-                  </div>
-                ) : (
-                  <>
-                    <div className="receipt-row">
-                      <span>CGST (Central Tax)</span>
-                      <span>{formatINR(extractedInvoice.cgst)}</span>
-                    </div>
-                    <div className="receipt-row">
-                      <span>SGST (State Tax)</span>
-                      <span>{formatINR(extractedInvoice.sgst)}</span>
-                    </div>
-                  </>
-                )}
-                <div className="receipt-row total">
-                  <span>Total Payable</span>
-                  <span>{formatINR(extractedInvoice.total_amount)}</span>
-                </div>
-              </div>
+        <div className="card stat-card">
+          <div className="stat-header">
+            <span>Total Tax Liability</span>
+            <TrendingUp size={18} color="#7c3aed" />
+          </div>
+          <div className="stat-value">{formatINR(stats.total_tax)}</div>
+          <div className="stat-subtext">On {formatINR(stats.total_sales)} turnover</div>
+        </div>
+      </div>
 
-              <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
-                <Link to="/review" className="button button-outline" style={{ flex: 1 }}>
-                  Go to Filing Review
-                </Link>
-                <button
-                  className="button"
-                  style={{ flex: 1 }}
-                  onClick={() => setExtractedInvoice(null)}
-                >
-                  Upload Another
-                </button>
-              </div>
+      {/* Smart Invoice Ingestion Card */}
+      <div className="card" style={{ marginBottom: 24 }}>
+        <h3>Smart Document Ingestion</h3>
+        <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 14 }}>
+          Upload PDF or image invoices to automatically extract seller details, GSTIN, line items, and tax rates with optical character recognition.
+        </p>
+
+        <div
+          className="dropzone"
+          onClick={() => fileInputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+              handleFileUpload(Array.from(e.dataTransfer.files));
+            }
+          }}
+          style={{ padding: "28px" }}
+        >
+          <UploadCloud size={32} color="#4338ca" />
+          <div>
+            <strong>Click or drag to upload invoice document(s) (PDF, PNG, JPG)</strong>
+            <p style={{ color: "#94a3b8", fontSize: "0.8rem", marginTop: 4 }}>
+              Supports single & multi-page documents, multiple files batch upload, automatic invoice separation, and rate split
+            </p>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept=".pdf,.jpg,.jpeg,.png"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              if (e.target.files && e.target.files.length > 0) {
+                handleFileUpload(Array.from(e.target.files));
+                e.target.value = "";
+              }
+            }}
+          />
+        </div>
+
+        {uploading && (
+          <p style={{ textAlign: "center", color: "#4338ca", marginTop: 12 }}>
+            Extracting invoice data and computing tax splits with Azure Document Intelligence...
+          </p>
+        )}
+
+        {uploadError && (
+          <div className="alert alert-danger" style={{ marginTop: 16 }}>
+            <AlertCircle size={18} />
+            <div>
+              <strong>Extraction Error:</strong>
+              <div style={{ fontSize: "0.85rem", marginTop: 4 }}>{uploadError}</div>
             </div>
-          ) : (
-            <div className="card">
-              <h3>Recently Uploaded Invoices</h3>
-              <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 14 }}>
-                Latest invoices recorded in your SQLite database.
-              </p>
-              {recentInvoices.length === 0 ? (
-                <p style={{ color: "#94a3b8" }}>No invoices yet.</p>
+          </div>
+        )}
+
+        {extractedInvoice && (
+          <div className="alert alert-success" style={{ marginTop: 16 }}>
+            <CheckCircle2 size={20} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div style={{ flex: 1 }}>
+              {extractedInvoice.invoices && extractedInvoice.invoices.length > 1 ? (
+                <>
+                  <div style={{ fontWeight: 700, fontSize: "0.92rem", color: "#065f46" }}>
+                    Multi-Invoice Document Detected: {extractedInvoice.invoices.length} Invoices Ingested
+                  </div>
+                  <div style={{ fontSize: "0.82rem", color: "#047857", marginTop: 2 }}>
+                    Each invoice in the document was individually parsed and recorded into your active ledger:
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: 8, marginTop: 10 }}>
+                    {extractedInvoice.invoices.map((inv, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          background: "#ffffff",
+                          padding: "8px 12px",
+                          borderRadius: 8,
+                          border: "1px solid #bbf7d0",
+                          boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <strong style={{ fontSize: "0.82rem", color: "#1e293b" }}>#{inv.invoice_number}</strong>
+                          <span className="badge badge-success" style={{ fontSize: "0.68rem", padding: "1px 5px" }}>
+                            {inv.status || "verified"}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: 3 }}>
+                          Seller: {inv.seller_name || inv.seller_gstin || "Supplier"}
+                        </div>
+                        <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#059669", marginTop: 3 }}>
+                          {formatINR(inv.grand_total || inv.total_amount)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  {recentInvoices.map((inv) => (
-                    <div
-                      key={inv.id}
-                      style={{
-                        padding: "12px 14px",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: 8,
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <div>
-                        <strong>{inv.invoice_number}</strong>
-                        <div style={{ fontSize: "0.78rem", color: "#64748b" }}>
-                          Rate: {inv.gst_rate}% | GSTIN: {inv.seller_gstin.slice(0, 5)}...
-                        </div>
-                      </div>
-                      <div style={{ textAlign: "right" }}>
-                        <strong>{formatINR(inv.total_amount)}</strong>
-                        <div style={{ fontSize: "0.75rem", color: "#059669" }}>
-                          {inv.status}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <strong>Successfully Ingested Invoice #{extractedInvoice.invoice_number}</strong>
+                  <div style={{ fontSize: "0.84rem", marginTop: 4 }}>
+                    Seller: {extractedInvoice.seller_gstin} | Taxable: {formatINR(extractedInvoice.taxable_amount)} | Total: {formatINR(extractedInvoice.grand_total || extractedInvoice.total_amount)}
+                  </div>
+                </>
               )}
             </div>
-          )}
+          </div>
+        )}
+      </div>
+
+      {/* Invoice Ledger Table */}
+      <div className="card">
+        <div className="header-row">
+          <h3>Invoice Ledger Table</h3>
+          <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
+            {invoices.length} recorded invoices
+          </span>
+        </div>
+
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Seller GSTIN</th>
+                <th>Buyer GSTIN</th>
+                <th>Taxable Base</th>
+                <th>Rate</th>
+                <th>Total Value</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {invoices.map((inv) => (
+                <tr key={inv.id}>
+                  <td><strong>{inv.invoice_number}</strong></td>
+                  <td><code>{inv.seller_gstin}</code></td>
+                  <td><code>{inv.buyer_gstin}</code></td>
+                  <td>{formatINR(inv.taxable_amount)}</td>
+                  <td>{inv.gst_rate}%</td>
+                  <td><strong>{formatINR(inv.grand_total ?? inv.total_amount)}</strong></td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        inv.status === "processed" || inv.status === "verified" || inv.status === "filed"
+                          ? "badge-success"
+                          : "badge-warning"
+                      }`}
+                    >
+                      {inv.status}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className="button button-danger button-sm"
+                      onClick={() => handleDelete(inv.id)}
+                      title="Delete Invoice"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </>
   );
 }
 
-// ---------------------------------------------------------
-// 3. GST Calculator View
-// ---------------------------------------------------------
+// ==============================================================================
+// 3. GST TAX CALCULATOR & HSN DIRECTORY
+// ==============================================================================
 function Calculator() {
-  const [taxableAmount, setTaxableAmount] = useState(25000);
-  const [gstRate, setGstRate] = useState(18);
-  const [transactionType, setTransactionType] = useState("intra_state");
-  const [cess, setCess] = useState(0);
-  const [calcResult, setCalcResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [taxable, setTaxable] = useState(25000);
+  const [rate, setRate] = useState(18);
+  const [txType, setTxType] = useState("intra_state");
+  const [result, setResult] = useState(null);
+  const [hsnSearch, setHsnSearch] = useState("9983");
+  const [hsnResult, setHsnResult] = useState(null);
 
-  const rates = [0, 5, 12, 18, 28];
+  // Calculate GST splits via backend computation engine
+  useEffect(() => {
+    fetch(`${API_BASE}/gst/calculate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        taxable_amount: parseFloat(taxable) || 0,
+        gst_rate: parseFloat(rate) || 0,
+        transaction_type: txType,
+        cess: 0,
+      }),
+    })
+      .then((r) => r.json())
+      .then(setResult)
+      .catch(console.error);
+  }, [taxable, rate, txType]);
 
-  const calculateGST = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${API_BASE}/gst/calculate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          taxable_amount: parseFloat(taxableAmount) || 0,
-          gst_rate: parseFloat(gstRate) || 0,
-          transaction_type: transactionType,
-          cess: parseFloat(cess) || 0,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCalcResult(data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  // Lookup HSN code
+  const handleHsnLookup = (code) => {
+    const c = code || hsnSearch;
+    setHsnSearch(c);
+    fetch(`${API_BASE}/gst/hsn/lookup?hsn_code=${c}`)
+      .then((r) => r.json())
+      .then(setHsnResult)
+      .catch(console.error);
   };
 
   useEffect(() => {
-    calculateGST();
-  }, [taxableAmount, gstRate, transactionType, cess]);
+    handleHsnLookup("9983");
+  }, []);
 
   return (
     <>
       <div className="header-row">
         <div>
-          <h1>GST Calculation Engine</h1>
+          <h1>GST Tax Calculation & Tariff Directory</h1>
           <p className="subtitle">
-            Calculate accurate CGST, SGST, IGST, and Cess for any taxable supply.
+            Accurate CGST, SGST, and IGST tax computations with HSN tariff classification.
           </p>
         </div>
       </div>
 
       <div className="grid-2">
-        {/* Left Card: Input Parameters */}
+        {/* Left: Input Parameters */}
         <div className="card">
-          <h2>Calculation Parameters</h2>
-
-          <div className="form-group">
-            <label>Taxable Amount (₹)</label>
+          <h3>Tax Parameters</h3>
+          <div className="form-group" style={{ marginTop: 12 }}>
+            <label>Taxable Base Amount (₹)</label>
             <input
               type="number"
-              min="0"
-              step="100"
-              value={taxableAmount}
-              onChange={(e) => setTaxableAmount(e.target.value)}
-              placeholder="e.g. 50000"
+              value={taxable}
+              onChange={(e) => setTaxable(e.target.value)}
             />
           </div>
 
           <div className="form-group">
-            <label>Select GST Tax Slab</label>
+            <label>GST Rate Slab</label>
             <div className="rate-pill-group">
-              {rates.map((r) => (
+              {[0, 5, 12, 18, 28].map((r) => (
                 <button
                   key={r}
                   type="button"
-                  className={`rate-pill ${gstRate === r ? "active" : ""}`}
-                  onClick={() => setGstRate(r)}
+                  className={`rate-pill ${rate === r ? "active" : ""}`}
+                  onClick={() => setRate(r)}
                 >
-                  {r}% {r === 0 ? "(Exempt)" : ""}
+                  {r}%
                 </button>
               ))}
             </div>
           </div>
 
           <div className="form-group">
-            <label>Transaction Nature</label>
+            <label>Supply Nature</label>
             <div className="radio-group">
               <div
-                className={`radio-card ${transactionType === "intra_state" ? "selected" : ""}`}
-                onClick={() => setTransactionType("intra_state")}
+                className={`radio-card ${txType === "intra_state" ? "selected" : ""}`}
+                onClick={() => setTxType("intra_state")}
               >
-                <span>Intra-State (Within State: CGST + SGST)</span>
+                Intra-State (CGST 50% + SGST 50%)
               </div>
               <div
-                className={`radio-card ${transactionType === "inter_state" ? "selected" : ""}`}
-                onClick={() => setTransactionType("inter_state")}
+                className={`radio-card ${txType === "inter_state" ? "selected" : ""}`}
+                onClick={() => setTxType("inter_state")}
               >
-                <span>Inter-State (Outside State: IGST)</span>
+                Inter-State (IGST 100%)
               </div>
             </div>
           </div>
-
-          <div className="form-group">
-            <label>Compensation Cess (₹ Optional)</label>
-            <input
-              type="number"
-              min="0"
-              value={cess}
-              onChange={(e) => setCess(e.target.value)}
-              placeholder="0.00"
-            />
-          </div>
         </div>
 
-        {/* Right Card: Real-Time Results Breakdown */}
+        {/* Right: Output Receipt */}
         <div className="card">
-          <h2>Tax Summary Breakdown</h2>
-          <p style={{ color: "#64748b", fontSize: "0.88rem", marginBottom: 14 }}>
-            Computed via backend <code>POST /api/v1/gst/calculate</code>
-          </p>
-
-          {calcResult ? (
-            <div>
-              <div className="receipt-card">
-                <div className="receipt-row">
-                  <span>Taxable Base Value</span>
-                  <strong>{formatINR(taxableAmount)}</strong>
-                </div>
-                <div className="receipt-row">
-                  <span>Applied Slab</span>
-                  <span>{gstRate}%</span>
-                </div>
-
-                {transactionType === "intra_state" ? (
-                  <>
-                    <div className="receipt-row">
-                      <span>CGST (Central Tax @ {gstRate / 2}%)</span>
-                      <span style={{ color: "#4338ca", fontWeight: 600 }}>
-                        {formatINR(calcResult.cgst)}
-                      </span>
-                    </div>
-                    <div className="receipt-row">
-                      <span>SGST (State Tax @ {gstRate / 2}%)</span>
-                      <span style={{ color: "#4338ca", fontWeight: 600 }}>
-                        {formatINR(calcResult.sgst)}
-                      </span>
-                    </div>
-                  </>
-                ) : (
-                  <div className="receipt-row">
-                    <span>IGST (Integrated Tax @ {gstRate}%)</span>
-                    <span style={{ color: "#4338ca", fontWeight: 600 }}>
-                      {formatINR(calcResult.igst)}
-                    </span>
-                  </div>
-                )}
-
-                {parseFloat(cess) > 0 && (
-                  <div className="receipt-row">
-                    <span>Compensation Cess</span>
-                    <span>{formatINR(cess)}</span>
-                  </div>
-                )}
-
-                <div className="receipt-row">
-                  <span>Total Tax Amount</span>
-                  <strong>{formatINR(calcResult.gst + (parseFloat(cess) || 0))}</strong>
-                </div>
-
-                <div className="receipt-row total">
-                  <span>Grand Total (Invoice Value)</span>
-                  <span>{formatINR(calcResult.total)}</span>
-                </div>
+          <h3>Tax Invoice Breakdown</h3>
+          {result ? (
+            <div className="receipt-card" style={{ marginTop: 14 }}>
+              <div className="receipt-row">
+                <span>Taxable Base</span>
+                <strong>{formatINR(taxable)}</strong>
               </div>
-
-              <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
-                <Link to="/assistant" className="button button-outline" style={{ flex: 1 }}>
-                  <Bot size={15} /> Ask Rules on this Slab
-                </Link>
-                <Link to="/upload" className="button" style={{ flex: 1 }}>
-                  <Plus size={15} /> Create Invoice with this
-                </Link>
+              <div className="receipt-row">
+                <span>Rate Slab</span>
+                <span>{rate}%</span>
+              </div>
+              {txType === "intra_state" ? (
+                <>
+                  <div className="receipt-row">
+                    <span>CGST (Central Tax @ {rate / 2}%)</span>
+                    <span>{formatINR(result.cgst)}</span>
+                  </div>
+                  <div className="receipt-row">
+                    <span>SGST (State Tax @ {rate / 2}%)</span>
+                    <span>{formatINR(result.sgst)}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="receipt-row">
+                  <span>IGST (Integrated Tax @ {rate}%)</span>
+                  <span>{formatINR(result.igst)}</span>
+                </div>
+              )}
+              <div className="receipt-row">
+                <span>Total Tax Amount</span>
+                <strong>{formatINR(result.gst)}</strong>
+              </div>
+              <div className="receipt-row total">
+                <span>Gross Invoice Total</span>
+                <span>{formatINR(result.total)}</span>
               </div>
             </div>
           ) : (
-            <p style={{ color: "#94a3b8" }}>Calculating...</p>
+            <p>Computing tax...</p>
           )}
         </div>
+      </div>
+
+      {/* HSN Directory Quick Finder */}
+      <div className="card" style={{ marginTop: 20 }}>
+        <h3>HSN / SAC Code Directory</h3>
+        <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 12 }}>
+          Look up official GST rates and statutory descriptions by 4-digit code.
+        </p>
+
+        <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+          <input
+            type="text"
+            placeholder="Enter HSN Code (e.g. 9983, 8471, 2106)"
+            value={hsnSearch}
+            onChange={(e) => setHsnSearch(e.target.value)}
+            style={{ maxWidth: 320 }}
+          />
+          <button className="button button-outline" onClick={() => handleHsnLookup(hsnSearch)}>
+            <Search size={15} /> Search HSN
+          </button>
+        </div>
+
+        {/* Quick Click Badges */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          {[
+            { code: "9983", label: "IT & Software Services (18%)" },
+            { code: "8471", label: "Computers & Laptops (18%)" },
+            { code: "2106", label: "Food Preparations (18%)" },
+            { code: "8703", label: "Motor Passenger Vehicles (28%)" },
+            { code: "4820", label: "Paper Stationery & Registers (12%)" },
+          ].map((item) => (
+            <button
+              key={item.code}
+              className="chip"
+              onClick={() => handleHsnLookup(item.code)}
+            >
+              <code>{item.code}</code> - {item.label}
+            </button>
+          ))}
+        </div>
+
+        {hsnResult && (
+          <div className="receipt-card" style={{ marginTop: 10 }}>
+            <div className="receipt-row">
+              <span>HSN / SAC Code</span>
+              <code>{hsnResult.hsn_code}</code>
+            </div>
+            <div className="receipt-row">
+              <span>Standard Rate Slab</span>
+              <strong>{hsnResult.rate}%</strong>
+            </div>
+            <div className="receipt-row">
+              <span>Category Description</span>
+              <span>{hsnResult.description}</span>
+            </div>
+            {hsnResult.chapter && (
+              <div className="receipt-row">
+                <span>Tariff Chapter</span>
+                <span>{hsnResult.chapter}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   );
 }
 
-// ---------------------------------------------------------
-// 4. AI Assistant View
-// ---------------------------------------------------------
-function Assistant() {
+// ==============================================================================
+// 4. AI TAX SAATHI (AUTONOMOUS MULTI-TOOL REASONING AGENT)
+// (Utilizes Azure AI Foundry Agent Service with Function Calling)
+// ==============================================================================
+function AgentView() {
   const [messages, setMessages] = useState([
     {
       sender: "bot",
       text:
-        "Namaste! I am the **Azure AI Foundry GST Compliance Agent** (`gst-tax-compliance-agent`).\n\nI am equipped with autonomous tools to calculate taxes, check Section 17(5) blocked credits, lookup HSN codes, validate GSTINs, and reconcile your compliance ledger.",
-      type: "intro",
-      tools_registered: ["calculate_gst_tool", "validate_gstin_tool", "lookup_hsn_tool", "check_itc_section_17_5_tool", "reconcile_ledger_summary_tool"],
+        "Namaste! I am your **Autonomous GST Tax Saathi**.\n\nI can calculate taxes, verify GSTINs, inspect Section 17(5) blocked credit rules, look up HSN classifications, and reconcile your active turnover ledger.",
     },
   ]);
+  const [conversationHistory, setConversationHistory] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const suggestedQuestions = [
-    "Calculate GST for 45,000 at 18% intra-state",
-    "Can I claim ITC on employee food catering and company cars?",
+  const suggestedPrompts = [
+    "Calculate GST for ₹45,000 at 18% intra-state",
+    "Can we claim ITC on employee food catering and company cars?",
     "What is the tax rate for HSN code 9983?",
     "Validate GSTIN 27AABCU9603R1ZM",
-    "Reconcile ledger summary for current period",
-    "What are GSTR-1 and GSTR-3B due dates?",
+    "Reconcile ledger turnover for current filing period",
   ];
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = async (textToSend) => {
-    const q = textToSend || input;
+  const handleResetChat = () => {
+    setMessages([
+      {
+        sender: "bot",
+        text:
+          "Namaste! I am your **Autonomous GST Tax Saathi**.\n\nI can calculate taxes, verify GSTINs, inspect Section 17(5) blocked credit rules, look up HSN classifications, and reconcile your active turnover ledger.",
+      },
+    ]);
+    setConversationHistory([]);
+  };
+
+  const sendPrompt = async (promptText) => {
+    const q = promptText || input;
     if (!q.trim() || loading) return;
 
-    const userMsg = { sender: "user", text: q };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, { sender: "user", text: q }]);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/copilot/query`, {
+      const res = await authFetch(`${API_BASE}/copilot/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: q }),
+        body: JSON.stringify({
+          question: q,
+          conversation_history: conversationHistory,
+        }),
       });
 
       if (res.ok) {
         const data = await res.json();
+        if (data.conversation_history) {
+          setConversationHistory(data.conversation_history);
+        }
+        const replyText = data.answer || data.response || "No response received.";
         setMessages((prev) => [
           ...prev,
           {
             sender: "bot",
-            text: data.answer,
-            type: data.type,
-            tool_calls: data.tool_calls,
+            text: replyText,
             agent_thought: data.agent_thought,
-            agent_name: data.agent_name,
-            mode: data.mode,
-            model: data.model,
+            tool_calls: data.tool_calls || data.tools_executed || [],
           },
         ]);
       } else {
+        const errData = await res.json().catch(() => ({}));
         setMessages((prev) => [
           ...prev,
           {
             sender: "bot",
-            text: "Sorry, I encountered an error executing the agent workflow.",
+            text: errData.detail || "Error communicating with AI Tax Saathi agent.",
           },
         ]);
       }
-    } catch (err) {
+    } catch (e) {
+      console.error(e);
       setMessages((prev) => [
         ...prev,
         {
@@ -999,38 +845,41 @@ function Assistant() {
     }
   };
 
-  // Simple formatter to parse bold and bullets
-  const renderFormattedText = (text) => {
-    if (!text) return null;
-    const lines = text.split("\n");
-    return lines.map((line, idx) => {
-      const parts = line.split(/(\*\*.*?\*\*)/g);
-      const formattedParts = parts.map((part, pIdx) => {
-        if (part.startsWith("**") && part.endsWith("**")) {
-          return <strong key={pIdx}>{part.slice(2, -2)}</strong>;
-        }
-        return part;
-      });
-
-      return (
-        <div key={idx} style={{ minHeight: line === "" ? 8 : undefined }}>
-          {formattedParts}
-        </div>
-      );
-    });
-  };
-
   return (
     <>
       <div className="header-row">
         <div>
-          <h1>Azure AI Foundry Tax Compliance Agent</h1>
+          <h1>Autonomous AI Tax Saathi</h1>
           <p className="subtitle">
-            Autonomous agent equipped with function tools for GST calculations, HSN lookups, and statutory validation.
+            Enterprise reasoning agent equipped with automated tax computation and compliance function tools.
           </p>
+        </div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {conversationHistory.length > 0 && (
+            <span
+              style={{
+                fontSize: "0.8rem",
+                background: "#e0e7ff",
+                color: "#4338ca",
+                padding: "4px 10px",
+                borderRadius: 12,
+                fontWeight: 600,
+              }}
+            >
+              🧠 Memory Active ({Math.max(1, Math.floor(conversationHistory.length / 2))} turns)
+            </span>
+          )}
+          <button
+            className="button button-outline button-sm"
+            onClick={handleResetChat}
+            title="Clear conversation history and start fresh"
+          >
+            <RotateCcw size={14} /> New Chat
+          </button>
         </div>
       </div>
 
+      {/* Agent Engine Status Bar */}
       <div
         style={{
           display: "flex",
@@ -1038,23 +887,21 @@ function Assistant() {
           alignItems: "center",
           background: "#eef2ff",
           border: "1px solid #c7d2fe",
-          borderRadius: 10,
-          padding: "10px 16px",
+          borderRadius: 8,
+          padding: "8px 14px",
           marginBottom: 16,
           fontSize: "0.85rem",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="dot" style={{ background: "#4338ca" }} />
-          <strong>Agent:</strong> <code>gst-tax-compliance-agent</code>
-          <span style={{ color: "#6366f1" }}>|</span>
-          <strong>Model:</strong> <code>gpt-4o</code>
+        <div>
+          <strong>Agent Engine:</strong> <code>gst-tax-compliance-agent</code> | <strong>Model:</strong> <code>gpt-5-mini</code>
         </div>
-        <div style={{ color: "#4338ca", fontSize: "0.8rem", fontWeight: 600 }}>
-          5 Tools: calculate_gst • validate_gstin • lookup_hsn • check_itc • reconcile_ledger
+        <div style={{ color: "#4338ca", fontWeight: 600 }}>
+          5 Specialized Function Tools Active
         </div>
       </div>
 
+      {/* Chat Messages */}
       <div className="chat-container">
         <div className="chat-messages">
           {messages.map((m, idx) => (
@@ -1064,54 +911,47 @@ function Assistant() {
                 m.sender === "user" ? "chat-bubble-user" : "chat-bubble-assistant"
               }`}
             >
+              {/* Agent Thought Reasoning */}
               {m.agent_thought && (
                 <div
                   style={{
                     fontSize: "0.78rem",
-                    color: "#6366f1",
-                    background: "rgba(99, 102, 241, 0.08)",
-                    padding: "6px 10px",
+                    color: "#4338ca",
+                    background: "#eef2ff",
+                    padding: "6px 8px",
                     borderRadius: 6,
                     marginBottom: 8,
-                    borderLeft: "3px solid #6366f1",
                   }}
                 >
                   💭 <strong>Agent Reasoning:</strong> {m.agent_thought}
                 </div>
               )}
 
-              {m.tool_calls && m.tool_calls.length > 0 && (
-                <div style={{ marginBottom: 10 }}>
-                  {m.tool_calls.map((tc, tcIdx) => (
-                    <div
-                      key={tcIdx}
-                      style={{
-                        background: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: 6,
-                        padding: "6px 10px",
-                        fontSize: "0.78rem",
-                        color: "#0f172a",
-                        marginBottom: 4,
-                      }}
-                    >
-                      <span style={{ color: "#059669", fontWeight: 600 }}>
-                        ⚙️ Executed Tool: <code>{tc.tool_name}</code>
-                      </span>
-                    </div>
-                  ))}
+              {/* Executed Tools Telemetry */}
+              {m.tool_calls && m.tool_calls.map((t, tIdx) => (
+                <div
+                  key={tIdx}
+                  style={{
+                    background: "#ffffff",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 6,
+                    padding: "6px 10px",
+                    fontSize: "0.8rem",
+                    marginBottom: 8,
+                  }}
+                >
+                  <span style={{ color: "#059669", fontWeight: 600 }}>
+                    ⚙️ Executed Tool: <code>{t.tool_name}</code>
+                  </span>
                 </div>
-              )}
+              ))}
 
-              {renderFormattedText(m.text)}
+              <div style={{ whiteSpace: "pre-line" }}>{m.text}</div>
             </div>
           ))}
           {loading && (
             <div className="chat-bubble chat-bubble-assistant">
-              <span style={{ color: "#64748b" }}>
-                <Sparkles size={14} style={{ marginRight: 6 }} />
-                Azure AI Foundry Agent reasoning and invoking tools...
-              </span>
+              Thinking...
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -1119,35 +959,30 @@ function Assistant() {
 
         {/* Suggestion Chips */}
         <div className="chat-chips">
-          {suggestedQuestions.map((q, i) => (
-            <button
-              key={i}
-              className="chip"
-              onClick={() => sendMessage(q)}
-              disabled={loading}
-            >
-              {q}
+          {suggestedPrompts.map((p, i) => (
+            <button key={i} className="chip" onClick={() => sendPrompt(p)}>
+              {p}
             </button>
           ))}
         </div>
 
-        {/* Input Bar */}
+        {/* Input Form */}
         <form
           className="chat-input-area"
           onSubmit={(e) => {
             e.preventDefault();
-            sendMessage();
+            sendPrompt();
           }}
         >
           <input
             type="text"
-            placeholder="Instruct the agent (e.g. 'Calculate GST on 60,000 at 18% intra-state')..."
+            placeholder="Ask your tax compliance question (e.g. 'Calculate GST for 50,000 at 18%')..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={loading}
           />
           <button type="submit" className="button" disabled={loading || !input.trim()}>
-            <Send size={16} /> Instruct Agent
+            <Send size={16} /> Send
           </button>
         </form>
       </div>
@@ -1155,80 +990,431 @@ function Assistant() {
   );
 }
 
-// ---------------------------------------------------------
-// 5. Filing Review & Approval View
-// ---------------------------------------------------------
-function Review() {
+// ==============================================================================
+// 5. GSTR RETURN FILING & RECONCILIATION
+// ==============================================================================
+function FilingView({ currentUser }) {
   const [period, setPeriod] = useState("September 2026");
-  const [filings, setFilings] = useState([]);
-  const [stats, setStats] = useState({ total_sales: 0, total_tax: 0, total_invoices: 0 });
-  const [draftFiling, setDraftFiling] = useState(null);
-  const [submissionReceipt, setSubmissionReceipt] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const loadData = async () => {
+  const isGstinValid = Boolean(
+    summary?.validations?.gstin_validation || 
+    (summary?.gstin && summary.gstin !== "N/A" && !summary.gstin.startsWith("00UNKNOWN") && /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(summary.gstin)) ||
+    (currentUser?.gstin && /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(currentUser.gstin))
+  );
+
+  // Fast mathematical calculation & reconciliation checks (Zero AI tokens consumed)
+  const handleLoadTotals = async (targetPeriod) => {
+    const p = targetPeriod || period;
     try {
-      const [filingRes, statsRes] = await Promise.all([
-        fetch(`${API_BASE}/filings`),
-        fetch(`${API_BASE}/invoices/stats`),
-      ]);
-      if (filingRes.ok) setFilings(await filingRes.json());
-      if (statsRes.ok) setStats(await statsRes.json());
+      setLoading(true);
+      setError(null);
+      const res = await authFetch(`${API_BASE}/filing/generate-summary`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ period: p, generate_ai: false }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSummary(data);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setError(errData.detail || "Failed to load GSTR-3B ledger totals.");
+      }
     } catch (e) {
       console.error(e);
+      setError("Network error: Unable to reach backend server.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Explicit user action to invoke Azure AI Foundry agent (Consumes tokens on demand)
+  const handleGenerateAISummary = async () => {
+    try {
+      setAiLoading(true);
+      setError(null);
+      const res = await authFetch(`${API_BASE}/filing/generate-summary`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ period: period, generate_ai: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSummary(data);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setError(errData.detail || "Failed to generate AI compliance summary.");
+      }
+    } catch (e) {
+      console.error(e);
+      setError("Network error: Unable to reach backend server.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Download official GSTN-compliant JSON for direct upload to gst.gov.in
+  const handleDownloadGSTPortalJSON = async () => {
+    try {
+      const res = await authFetch(`${API_BASE}/filing/export-json?period=${encodeURIComponent(period)}&return_type=GSTR-3B`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const disposition = res.headers.get("Content-Disposition");
+        let filename = `GSTR3B_${period.replace(/\s+/g, "_")}.json`;
+        if (disposition && disposition.indexOf("filename=") !== -1) {
+          filename = disposition.split("filename=")[1].replace(/"/g, "").trim();
+        }
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setError(errData.detail || "Failed to export GST Portal JSON.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Network error occurred while downloading GST Portal JSON.");
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    handleLoadTotals(period);
+  }, [period]);
 
-  const handlePrepareDraft = async () => {
+  return (
+    <>
+      <div className="header-row">
+        <div>
+          <h1>GSTR-3B Return Filing & Reconciliation</h1>
+          <p className="subtitle">
+            Consolidate period turnover, verify outward tax liabilities, and generate return summaries.
+          </p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="alert alert-danger" style={{ marginBottom: 20 }}>
+          <AlertCircle size={20} />
+          <div>
+            <strong>Error:</strong> {error}
+          </div>
+        </div>
+      )}
+
+      {/* AI Agent Analysis Progress Indicator */}
+      {aiLoading && (
+        <div className="card" style={{ marginBottom: 24, textAlign: "center", padding: "28px 20px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 12, color: "#4338ca", fontWeight: 600, fontSize: "1.02rem" }}>
+            <RefreshCw size={22} className="spin-animation" />
+            <span>AI Tax Agent (gst-tax-compliance-agent | gpt-5-mini) is generating GSTR-3B compliance summary...</span>
+          </div>
+          <p style={{ color: "#64748b", fontSize: "0.85rem", marginTop: 8 }}>
+            Reconciling ledger data, evaluating Section 17(5) ITC restrictions, verifying GSTINs, and compiling statutory advisory.
+          </p>
+        </div>
+      )}
+
+      {/* Main GSTR-3B Summary Card */}
+      {summary && (
+        <div className="card gstr3b-print-container" style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18, flexWrap: "wrap", gap: 10 }}>
+            <div>
+              <h2 style={{ fontSize: "1.3rem", margin: 0 }}>GSTR-3B Return Summary</h2>
+              <div style={{ color: "#64748b", fontSize: "0.9rem", marginTop: 4 }}>
+                Period: <strong>{summary.period}</strong> | Taxpayer GSTIN: <strong>{summary.gstin || "N/A"}</strong>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                className="button button-outline button-sm print-hide"
+                onClick={() => window.print()}
+                title="Print or Save GSTR-3B as PDF"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              >
+                <Printer size={15} /> Print / Save as PDF
+              </button>
+              <button
+                type="button"
+                className="button button-sm print-hide"
+                onClick={handleDownloadGSTPortalJSON}
+                title="Download official GSTN-compliant JSON for GST Portal upload"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  background: "#059669",
+                  borderColor: "#059669",
+                  color: "#fff"
+                }}
+              >
+                <Download size={15} /> Download GST Portal JSON
+              </button>
+              <span
+                className="badge badge-success"
+                style={{ fontSize: "0.85rem", padding: "6px 14px" }}
+              >
+                Status: {summary.status}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid-2 print-grid">
+            {/* Financial Totals Breakdown */}
+            <div className="receipt-card">
+              <div className="receipt-row">
+                <span>Included Invoices</span>
+                <strong>{summary.included_invoices} records</strong>
+              </div>
+              <div className="receipt-row">
+                <span>Gross Taxable Turnover</span>
+                <strong>{formatINR(summary.gross_taxable_turnover)}</strong>
+              </div>
+              <div className="receipt-row">
+                <span>CGST</span>
+                <span>{formatINR(summary.cgst)}</span>
+              </div>
+              <div className="receipt-row">
+                <span>SGST</span>
+                <span>{formatINR(summary.sgst)}</span>
+              </div>
+              <div className="receipt-row">
+                <span>IGST</span>
+                <span>{formatINR(summary.igst)}</span>
+              </div>
+              <div className="receipt-row total">
+                <span>Total Tax Payable</span>
+                <span>{formatINR(summary.total_tax_payable)}</span>
+              </div>
+              {summary.eligible_itc > 0 && (
+                <div className="receipt-row" style={{ color: "#059669" }}>
+                  <span>Eligible Input Tax Credit (ITC)</span>
+                  <span>{formatINR(summary.eligible_itc)}</span>
+                </div>
+              )}
+              {summary.blocked_itc > 0 && (
+                <div className="receipt-row" style={{ color: "#dc2626" }}>
+                  <span>Blocked ITC (Section 17(5))</span>
+                  <span>{formatINR(summary.blocked_itc)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Validation & Verification Checklist */}
+            <div style={{ padding: "18px", background: "#f8fafc", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+              <h4 style={{ margin: "0 0 14px 0", fontSize: "0.95rem" }}>Validation Checklist:</h4>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.88rem", color: summary.validations?.invoice_reconciliation ? "#059669" : "#dc2626" }}>
+                  <CheckCircle2 size={18} /> Invoice reconciliation
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.88rem", color: isGstinValid ? "#059669" : "#dc2626" }}>
+                  <CheckCircle2 size={18} /> GSTIN structural validation
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.88rem", color: summary.validations?.itc_validation ? "#059669" : "#dc2626" }}>
+                  <CheckCircle2 size={18} /> Section 17(5) ITC blocked rules
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.88rem", color: summary.validations?.tax_calculation ? "#059669" : "#dc2626" }}>
+                  <CheckCircle2 size={18} /> CGST + SGST vs IGST calculation
+                </div>
+              </div>
+
+              <div style={{ marginTop: 24, paddingTop: 14, borderTop: "1px solid #e2e8f0", fontSize: "0.9rem" }}>
+                <strong>Status:</strong> <span style={{ color: "#059669", fontWeight: 700, marginLeft: 6 }}>{summary.status}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Statutory Compliance & Advisory Summary */}
+          {summary.ai_summary ? (
+            <div
+              style={{
+                marginTop: 20,
+                padding: "20px",
+                background: "#f8fafc",
+                borderRadius: 12,
+                border: "1px solid #c7d2fe",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span
+                    style={{
+                      background: "#eef2ff",
+                      color: "#4338ca",
+                      padding: "4px 10px",
+                      borderRadius: 6,
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      border: "1px solid #c7d2fe",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6
+                    }}
+                  >
+                    <Bot size={15} /> gst-tax-compliance-agent
+                  </span>
+                  <span style={{ fontSize: "0.82rem", color: "#64748b" }}>
+                    Engine: <strong>Azure AI Foundry (gpt-5-mini)</strong>
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <span className="badge badge-success" style={{ fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <ShieldCheck size={14} /> Statutory Verified
+                  </span>
+                  <button
+                    type="button"
+                    className="button button-outline button-sm print-hide"
+                    onClick={handleGenerateAISummary}
+                    disabled={aiLoading}
+                    title="Regenerate summary with AI agent"
+                    style={{ padding: "4px 10px", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: 4 }}
+                  >
+                    <RefreshCw size={13} className={aiLoading ? "spin-animation" : ""} /> Re-analyze
+                  </button>
+                </div>
+              </div>
+
+              {summary.agent_thought && (
+                <div
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "#4338ca",
+                    background: "#eef2ff",
+                    padding: "8px 12px",
+                    borderRadius: 6,
+                    marginBottom: 12,
+                  }}
+                >
+                  💭 <strong>Agent Reasoning:</strong> {summary.agent_thought}
+                </div>
+              )}
+
+              <div
+                style={{
+                  fontSize: "0.92rem",
+                  lineHeight: "1.65",
+                  color: "#1e293b",
+                  whiteSpace: "pre-line",
+                  background: "#ffffff",
+                  padding: "16px",
+                  borderRadius: 8,
+                  border: "1px solid #e2e8f0",
+                }}
+              >
+                {summary.ai_summary}
+              </div>
+            </div>
+          ) : (
+            /* On-Demand Button Card to Conserve Tokens */
+            !aiLoading && (
+              <div
+                className="print-hide"
+                style={{
+                  marginTop: 20,
+                  padding: "24px 20px",
+                  background: "#f8fafc",
+                  borderRadius: 12,
+                  border: "1.5px dashed #c7d2fe",
+                  textAlign: "center",
+                }}
+              >
+                <div style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#4338ca", fontWeight: 700, fontSize: "1.05rem" }}>
+                  <Bot size={20} /> AI Tax Compliance Summary (On Demand)
+                </div>
+                <p style={{ color: "#64748b", fontSize: "0.88rem", maxWidth: 620, margin: "8px auto 16px" }}>
+                  Synthesize an executive statutory compliance & reconciliation summary using <strong>gst-tax-compliance-agent</strong> (Azure AI Foundry <code>gpt-5-mini</code>).
+                  Tokens are only consumed when you click generate below.
+                </p>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={handleGenerateAISummary}
+                  disabled={aiLoading}
+                  style={{ padding: "10px 24px", fontSize: "0.92rem", display: "inline-flex", alignItems: "center", gap: 8, margin: "0 auto" }}
+                >
+                  <Sparkles size={16} /> Generate AI Compliance Summary
+                </button>
+              </div>
+            )
+          )}
+
+          {/* Official Print Footer */}
+          <div className="print-only official-print-footer" style={{ marginTop: 20, paddingTop: 12, borderTop: "1px solid #cbd5e1", fontSize: "0.8rem", color: "#64748b", justifyContent: "space-between" }}>
+            <span>GSTSaathi — Enterprise Tax Compliance & Reconciliation</span>
+            <span>Generated on: {new Date().toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Controls & Period Selector */}
+      <div className="card">
+        <h3>Select Return Period</h3>
+        <div style={{ display: "flex", gap: 16, alignItems: "flex-end", marginTop: 14, flexWrap: "wrap" }}>
+          <div className="form-group" style={{ flex: 1, minWidth: 240, margin: 0 }}>
+            <label>Filing Period</label>
+            <select value={period} onChange={(e) => setPeriod(e.target.value)}>
+              <option value="September 2026">September 2026 (Monthly Return)</option>
+              <option value="August 2026">August 2026 (Monthly Return)</option>
+              <option value="Q2 2026-27">Q2 2026-27 (Quarterly QRMP)</option>
+            </select>
+          </div>
+
+          <button
+            className="button button-outline"
+            style={{ padding: "12px 20px" }}
+            onClick={() => handleLoadTotals(period)}
+            disabled={loading || aiLoading}
+            title="Recalculate ledger totals without consuming AI tokens"
+          >
+            <RefreshCw size={15} className={loading ? "spin-animation" : ""} /> {loading ? "Calculating..." : "Recalculate Totals"}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ==============================================================================
+// 6. STATUTORY LEGAL ADVISOR (RETRIEVAL-AUGMENTED GENERATION - RAG)
+// (Utilizes RAG grounding over statutory CGST Act provisions)
+// ==============================================================================
+function LegalAdvisorView() {
+  const [ragQuery, setRagQuery] = useState("What are the conditions to claim ITC under Section 16?");
+  const [ragResult, setRagResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const sampleQueries = [
+    "What are the conditions to claim ITC under Section 16?",
+    "Are food, beverages, and motor vehicles blocked from ITC under Section 17(5)?",
+    "What are the turnover limits and restrictions for Composition Levy under Section 10?",
+    "What interest rates apply on delayed payment under Section 50?",
+    "When is an E-Way Bill mandatory under Rule 138?",
+  ];
+
+  const runRag = async (q) => {
+    const query = q || ragQuery;
+    if (!query.trim() || loading) return;
     try {
-      setSubmitting(true);
-      const res = await fetch(`${API_BASE}/filings/prepare`, {
+      setLoading(true);
+      const res = await authFetch(`${API_BASE}/modules/rag/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          period: period,
-          total_sales: stats.total_sales,
-          total_tax: stats.total_tax,
-        }),
+        body: JSON.stringify({ query }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setDraftFiling(data);
-        loadData();
-      }
+      if (res.ok) setRagResult(await res.json());
     } catch (err) {
       console.error(err);
     } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleMockSubmit = async () => {
-    try {
-      setSubmitting(true);
-      const res = await fetch(`${API_BASE}/filings/mock-submit`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filing_id: draftFiling ? draftFiling.id : null,
-          period: period,
-          total_sales: stats.total_sales,
-          total_tax: stats.total_tax,
-        }),
-      });
-      if (res.ok) {
-        const receipt = await res.json();
-        setSubmissionReceipt(receipt);
-        loadData();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -1236,177 +1422,172 @@ function Review() {
     <>
       <div className="header-row">
         <div>
-          <h1>GSTR Filing Review & Mock Submission</h1>
+          <h1>Statutory Tax Advisory & Legal Grounding</h1>
           <p className="subtitle">
-            Validate outward supplies and net tax liability before mock filing submission.
+            Retrieval-Augmented statutory legal guidance grounded directly in the Central Goods and Services Tax (CGST) Act.
           </p>
         </div>
       </div>
 
-      <div className="alert alert-info">
-        <AlertCircle size={20} />
+      {/* Agent Engine Status Bar */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "#eef2ff",
+          border: "1px solid #c7d2fe",
+          borderRadius: 8,
+          padding: "8px 14px",
+          marginBottom: 16,
+          fontSize: "0.85rem",
+          flexWrap: "wrap",
+          gap: 8,
+        }}
+      >
         <div>
-          <strong>Educational Demonstration Mode:</strong>
-          <div style={{ fontSize: "0.84rem" }}>
-            The submission feature simulates the GSTN filing flow and generates a valid-format
-            ARN (Application Reference Number). It does not connect to the live Government portal.
-          </div>
+          <strong>Agent Engine:</strong> <code>gst-rag-advisory-agent</code> | <strong>Model:</strong> <code>gpt-5-mini</code>
+        </div>
+        <div style={{ color: "#4338ca", fontWeight: 600 }}>
+          Foundry IQ: <code>gst-knowledge-base</code> | Search: <code>{ragResult?.search_service || "Azure AI Search"}</code>
         </div>
       </div>
 
-      {submissionReceipt && (
-        <div className="card" style={{ border: "2px solid #059669", background: "#f0fdf4" }}>
-          <div className="header-row" style={{ marginBottom: 10 }}>
-            <h3 style={{ color: "#065f46", display: "flex", alignItems: "center", gap: 8 }}>
-              <CheckCircle2 color="#059669" size={22} /> GSTR-3B Return Submitted (Mock)
-            </h3>
-            <span className="badge badge-success">Status: Filed</span>
-          </div>
-          <p style={{ color: "#065f46", fontSize: "0.9rem", marginBottom: 14 }}>
-            {submissionReceipt.message}
-          </p>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h3>Search Statutory Knowledge Base</h3>
+        <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 12 }}>
+          Query complex GST legal questions to retrieve statutory citations with verified groundedness confidence.
+        </p>
 
-          <div className="receipt-card" style={{ background: "white" }}>
-            <div className="receipt-row">
-              <span>Application Reference Number (ARN)</span>
-              <strong style={{ color: "#059669", fontSize: "1.1rem" }}>
-                {submissionReceipt.arn}
-              </strong>
-            </div>
-            <div className="receipt-row">
-              <span>Return Period</span>
-              <span>{submissionReceipt.period}</span>
-            </div>
-            <div className="receipt-row">
-              <span>Gross Taxable Turnover</span>
-              <span>{formatINR(submissionReceipt.total_sales)}</span>
-            </div>
-            <div className="receipt-row">
-              <span>Net Tax Discharged</span>
-              <span>{formatINR(submissionReceipt.total_tax)}</span>
-            </div>
-            <div className="receipt-row">
-              <span>Submission Timestamp</span>
-              <span>{submissionReceipt.submission_time}</span>
-            </div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+          <input
+            type="text"
+            value={ragQuery}
+            onChange={(e) => setRagQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") runRag(ragQuery);
+            }}
+            placeholder="Type your statutory question..."
+          />
+          <button className="button" onClick={() => runRag(ragQuery)} disabled={loading}>
+            {loading ? "Searching..." : "Search Legal Code"}
+          </button>
+        </div>
+
+        {/* Quick Query Presets */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {sampleQueries.map((sq, i) => (
+            <button
+              key={i}
+              type="button"
+              className="chip"
+              onClick={() => {
+                setRagQuery(sq);
+              }}
+              title="Click to insert this question into the search box"
+            >
+              {sq}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {!ragResult && !loading && (
+        <div className="card" style={{ textAlign: "center", padding: "36px 20px", color: "#64748b" }}>
+          <div style={{ color: "#4338ca", marginBottom: 10 }}>
+            <Sparkles size={32} style={{ margin: "0 auto" }} />
           </div>
+          <h4 style={{ margin: "0 0 6px", color: "#1e293b", fontSize: "1.05rem" }}>GST Statutory Legal Advisory Ready</h4>
+          <p style={{ margin: "0 auto", fontSize: "0.88rem", maxWidth: 540 }}>
+            Click <strong>"Search Legal Code"</strong> or pick one of the query presets above to consult the <code>gst-rag-advisory-agent</code> grounded in the CGST Act.
+          </p>
         </div>
       )}
 
-      <div className="grid-2">
-        {/* Left Column: Period & Computation Review */}
+      {ragResult && (
         <div className="card">
-          <h2>Tax Period Ledger Summary</h2>
-
-          <div className="form-group">
-            <label>Select Filing Period</label>
-            <select value={period} onChange={(e) => setPeriod(e.target.value)}>
-              <option value="September 2026">September 2026 (Monthly)</option>
-              <option value="August 2026">August 2026 (Monthly)</option>
-              <option value="Q2 (July - Sept 2026)">Q2 2026-27 (Quarterly QRMP)</option>
-              <option value="Q1 (April - June 2026)">Q1 2026-27 (Quarterly QRMP)</option>
-            </select>
-          </div>
-
-          <div className="receipt-card" style={{ margin: "20px 0" }}>
-            <div className="receipt-row">
-              <span>Invoices Included</span>
-              <strong>{stats.total_invoices} records</strong>
+          <div className="header-row">
+            <div>
+              <h3 style={{ margin: 0 }}>Grounded Legal Analysis</h3>
+              <div style={{ color: "#64748b", fontSize: "0.8rem", marginTop: 4 }}>
+                Agent: <strong>{ragResult.agent || "gst-rag-advisory-agent"}</strong> | Knowledge Base: <strong>{ragResult.knowledge_base || "gst-knowledge-base"}</strong>
+              </div>
             </div>
-            <div className="receipt-row">
-              <span>Total Outward Taxable Value</span>
-              <strong>{formatINR(stats.total_sales)}</strong>
-            </div>
-            <div className="receipt-row">
-              <span>Eligible Processed Records</span>
-              <span>{stats.processed} verified</span>
-            </div>
-            <div className="receipt-row total">
-              <span>Total Tax Payable</span>
-              <span>{formatINR(stats.total_tax)}</span>
+            <div style={{ display: "flex", gap: 8 }}>
+              {ragResult.groundedness_evaluation?.groundedness_score !== undefined && (
+                <span className="badge badge-success">
+                  Groundedness: {Math.round(ragResult.groundedness_evaluation.groundedness_score * 100)}%
+                </span>
+              )}
+              {ragResult.groundedness_evaluation?.content_safety_status && (
+                <span className="badge badge-primary">
+                  Safety: {ragResult.groundedness_evaluation.content_safety_status}
+                </span>
+              )}
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: 12 }}>
-            <button
-              className="button button-outline"
-              style={{ flex: 1 }}
-              onClick={handlePrepareDraft}
-              disabled={submitting}
-            >
-              Prepare Draft
-            </button>
-            <button
-              className="button"
-              style={{ flex: 1 }}
-              onClick={handleMockSubmit}
-              disabled={submitting}
-            >
-              <ShieldCheck size={16} /> Submit Draft (Mock)
-            </button>
+          <div className="receipt-card" style={{ marginTop: 12 }}>
+            <div style={{ whiteSpace: "pre-line", fontSize: "0.9rem", lineHeight: 1.65 }}>
+              {ragResult.grounded_response}
+            </div>
           </div>
-        </div>
 
-        {/* Right Column: Filing History */}
-        <div className="card">
-          <h2>Filing Audit History</h2>
-          <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 14 }}>
-            Historical filings logged in database table <code>filings</code>.
-          </p>
-
-          {filings.length === 0 ? (
-            <p style={{ color: "#94a3b8" }}>No filings recorded yet. Click "Prepare Draft" or "Submit Draft".</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {filings.map((f) => (
+          {/* Source Legal Documents */}
+          <div style={{ marginTop: 16 }}>
+            <h4 style={{ fontSize: "0.9rem", marginBottom: 10, color: "#475569" }}>
+              Statutory References Cited ({((ragResult.retrieved_statutory_context || ragResult.grounding_sources_used || []).length)} sources):
+            </h4>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              {(ragResult.retrieved_statutory_context || ragResult.grounding_sources_used || []).map((src, i) => (
                 <div
-                  key={f.id}
+                  key={i}
                   style={{
-                    padding: "14px",
+                    padding: "10px 14px",
+                    background: "#f8fafc",
                     border: "1px solid #e2e8f0",
-                    borderRadius: 10,
-                    background: "#ffffff",
+                    borderRadius: 8,
+                    fontSize: "0.84rem",
+                    flex: "1 1 calc(50% - 12px)",
+                    minWidth: 280,
                   }}
                 >
-                  <div className="header-row" style={{ marginBottom: 6 }}>
-                    <strong>{f.period}</strong>
-                    <span
-                      className={`badge ${
-                        f.status.includes("Submitted")
-                          ? "badge-success"
-                          : "badge-primary"
-                      }`}
-                    >
-                      {f.status}
-                    </span>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                    <strong style={{ color: "#4338ca" }}>{src.section || src.id || "Statutory Provision"}</strong>
+                    <span style={{ fontSize: "0.75rem", color: "#64748b" }}>{src.source_document || "CGST Act, 2017"}</span>
                   </div>
-                  <div style={{ fontSize: "0.84rem", color: "#64748b" }}>
-                    Sales: {formatINR(f.total_sales)} | Tax: {formatINR(f.total_tax)}
-                  </div>
-                  {f.arn && (
-                    <div style={{ fontSize: "0.78rem", color: "#059669", marginTop: 4 }}>
-                      ARN: <code>{f.arn}</code>
+                  {src.title && <div style={{ fontWeight: 600, fontSize: "0.82rem", marginBottom: 4 }}>{src.title}</div>}
+                  {src.excerpt && (
+                    <div style={{ color: "#475569", fontSize: "0.8rem", lineHeight: 1.5 }}>
+                      "{src.excerpt}"
                     </div>
                   )}
                 </div>
               ))}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 }
 
+// ==============================================================================
+// 7. ENTERPRISE AUDIT TRAIL
+// (Immutable chronological ledger tracking all application, OCR, and AI agent actions)
+// ==============================================================================
 function AuditView() {
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [filterAgent, setFilterAgent] = useState("all");
+  const [filterEvent, setFilterEvent] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const loadLogs = async () => {
+  const loadAuditLogs = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_BASE}/copilot/audit-logs`);
-      if (res.ok) setLogs(await res.json());
+      const res = await authFetch(`${API_BASE}/copilot/audit-logs`);
+      if (res.ok) setAuditLogs(await res.json());
     } catch (e) {
       console.error(e);
     } finally {
@@ -1415,65 +1596,191 @@ function AuditView() {
   };
 
   useEffect(() => {
-    loadLogs();
+    loadAuditLogs();
   }, []);
+
+  const getEventBadgeColor = (eventType) => {
+    const et = (eventType || "").toUpperCase();
+    if (et.includes("OCR") || et.includes("DOCUMENT")) return { bg: "#f3e8ff", color: "#6b21a8", border: "#d8b4fe" };
+    if (et.includes("RAG") || et.includes("STATUTORY")) return { bg: "#ecfdf5", color: "#065f46", border: "#a7f3d0" };
+    if (et.includes("SUMMARY") || et.includes("GSTR3B")) return { bg: "#eff6ff", color: "#1e40af", border: "#bfdbfe" };
+    if (et.includes("FILED") || et.includes("SUBMIT")) return { bg: "#fffbeb", color: "#92400e", border: "#fde68a" };
+    if (et.includes("OVERRIDE") || et.includes("HUMAN")) return { bg: "#fef2f2", color: "#991b1b", border: "#fecaca" };
+    if (et.includes("COPILOT") || et.includes("QUERY")) return { bg: "#eef2ff", color: "#3730a3", border: "#c7d2fe" };
+    return { bg: "#f1f5f9", color: "#334155", border: "#cbd5e1" };
+  };
+
+  const filteredLogs = auditLogs.filter((l) => {
+    const agentMatch = filterAgent === "all" || (l.agent || "system").toLowerCase() === filterAgent.toLowerCase();
+    const eventMatch = filterEvent === "all" || (l.event_type || l.action || "").toLowerCase() === filterEvent.toLowerCase();
+    const term = searchTerm.toLowerCase();
+    const searchMatch = !term ||
+      (l.description || l.details || "").toLowerCase().includes(term) ||
+      (l.reference_id || "").toLowerCase().includes(term) ||
+      (l.event_type || l.action || "").toLowerCase().includes(term) ||
+      (l.agent || "").toLowerCase().includes(term);
+    return agentMatch && eventMatch && searchMatch;
+  });
 
   return (
     <>
       <div className="header-row">
         <div>
-          <h1>Responsible AI & Human Oversight Audit Trail</h1>
+          <h1>Audit Trail</h1>
           <p className="subtitle">
-            AI-103 Compliance: Complete traceability of AI extractions, queries, and human verification.
+            Comprehensive, immutable chronological record of all invoice extractions, GST calculations, AI reasoning steps, and compliance actions.
           </p>
         </div>
-        <button className="button button-outline button-sm" onClick={loadLogs}>
-          <RefreshCw size={14} /> Refresh Logs
+        <button className="button button-outline button-sm" onClick={loadAuditLogs} disabled={loading}>
+          <RefreshCw size={14} className={loading ? "spin-animation" : ""} /> {loading ? "Refreshing..." : "Refresh Trail"}
         </button>
       </div>
 
-      <div className="alert alert-info">
-        <ShieldCheck size={20} />
-        <div>
-          <strong>Microsoft Responsible AI Principle:</strong>
-          <div style={{ fontSize: "0.84rem" }}>
-            Transparency, Accountability, and Human-in-the-loop oversight. Every automated action and human review is immutably logged in the SQLite audit ledger.
+      {/* Filter & Search Bar */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ flex: "2 1 260px", position: "relative" }}>
+            <input
+              type="text"
+              placeholder="Search by action, description, or reference ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: 34 }}
+            />
+            <Search size={16} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
           </div>
+
+          <div style={{ flex: "1 1 180px" }}>
+            <select value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)}>
+              <option value="all">All Agents & Services</option>
+              <option value="gst-tax-compliance-agent">gst-tax-compliance-agent</option>
+              <option value="gst-document-ocr-agent">gst-document-ocr-agent</option>
+              <option value="gst-rag-advisory-agent">gst-rag-advisory-agent</option>
+              <option value="gst_ledger">gst_ledger</option>
+              <option value="filing_service">filing_service</option>
+              <option value="human_review">human_review</option>
+            </select>
+          </div>
+
+          <div style={{ flex: "1 1 180px" }}>
+            <select value={filterEvent} onChange={(e) => setFilterEvent(e.target.value)}>
+              <option value="all">All Event Types</option>
+              <option value="DOCUMENT_INTELLIGENCE_OCR">DOCUMENT_INTELLIGENCE_OCR</option>
+              <option value="INVOICE_CREATED">INVOICE_CREATED</option>
+              <option value="GSTR3B_SUMMARY_GENERATED">GSTR3B_SUMMARY_GENERATED</option>
+              <option value="STATUTORY_RAG_ADVISORY">STATUTORY_RAG_ADVISORY</option>
+              <option value="TAX_COPILOT_QUERY">TAX_COPILOT_QUERY</option>
+              <option value="GSTR_RETURN_FILED">GSTR_RETURN_FILED</option>
+              <option value="HUMAN_STATUS_OVERRIDE">HUMAN_STATUS_OVERRIDE</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 14, paddingTop: 12, borderTop: "1px solid #f1f5f9", fontSize: "0.82rem", color: "#64748b" }}>
+          <div>
+            Showing <strong>{filteredLogs.length}</strong> of <strong>{auditLogs.length}</strong> audit events
+          </div>
+          {(filterAgent !== "all" || filterEvent !== "all" || searchTerm) && (
+            <button
+              type="button"
+              className="chip"
+              onClick={() => { setFilterAgent("all"); setFilterEvent("all"); setSearchTerm(""); }}
+              style={{ fontSize: "0.78rem", padding: "3px 10px" }}
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       </div>
 
+      {/* Audit Log Stream */}
       <div className="card">
-        <h2>Audit Ledger Records</h2>
-        {loading ? (
-          <p style={{ color: "#94a3b8", padding: 20 }}>Loading audit records...</p>
-        ) : logs.length === 0 ? (
-          <p style={{ color: "#94a3b8", padding: 20 }}>No audit logs recorded yet.</p>
+        {filteredLogs.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px 20px", color: "#94a3b8" }}>
+            <FileText size={36} style={{ marginBottom: 8, opacity: 0.5 }} />
+            <div>No audit events found matching the specified filters.</div>
+          </div>
         ) : (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Log ID</th>
-                  <th>Action</th>
-                  <th>Actor</th>
-                  <th>Details</th>
-                  <th>Timestamp</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((l) => (
-                  <tr key={l.id}>
-                    <td>#{l.id}</td>
-                    <td>
-                      <span className="badge badge-primary">{l.action}</span>
-                    </td>
-                    <td><code>{l.actor}</code></td>
-                    <td style={{ fontSize: "0.85rem" }}>{l.details}</td>
-                    <td style={{ fontSize: "0.8rem", color: "#64748b" }}>{l.timestamp}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {filteredLogs.map((log) => {
+              const badgeStyle = getEventBadgeColor(log.event_type || log.action);
+              return (
+                <div
+                  key={log.id}
+                  style={{
+                    padding: "14px 16px",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 8,
+                    background: "#ffffff",
+                    transition: "box-shadow 0.15s ease",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8, marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <span
+                        style={{
+                          background: badgeStyle.bg,
+                          color: badgeStyle.color,
+                          border: `1px solid ${badgeStyle.border}`,
+                          padding: "3px 8px",
+                          borderRadius: 4,
+                          fontSize: "0.78rem",
+                          fontWeight: 700,
+                          fontFamily: "monospace",
+                        }}
+                      >
+                        {log.event_type || log.action}
+                      </span>
+                      <span
+                        style={{
+                          background: "#f1f5f9",
+                          color: "#475569",
+                          padding: "2px 8px",
+                          borderRadius: 4,
+                          fontSize: "0.76rem",
+                          fontWeight: 600,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <Bot size={13} /> {log.agent || "system"}
+                      </span>
+                      {log.reference_id && log.reference_id !== "-" && (
+                        <span
+                          style={{
+                            background: "#eef2ff",
+                            color: "#4338ca",
+                            padding: "2px 8px",
+                            borderRadius: 4,
+                            fontSize: "0.76rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Ref: {log.reference_id}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span
+                        className="badge badge-success"
+                        style={{ fontSize: "0.72rem", padding: "2px 6px" }}
+                      >
+                        {log.status || "success"}
+                      </span>
+                      <span style={{ fontSize: "0.78rem", color: "#94a3b8", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        <Clock size={12} /> {log.timestamp}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ color: "#334155", fontSize: "0.88rem", lineHeight: 1.55 }}>
+                    {log.description || log.details}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -1481,354 +1788,833 @@ function AuditView() {
   );
 }
 
-function AzureModulesView() {
-  const [activeTab, setActiveTab] = useState(1);
-  const [ragQuery, setRagQuery] = useState("What are the conditions to claim ITC under Section 16?");
-  const [ragResult, setRagResult] = useState(null);
-  const [ragLoading, setRagLoading] = useState(false);
+// ==============================================================================
+// 8. AUTHENTICATION (LOGIN & REGISTRATION VIEW - UI PRO MAX)
+// ==============================================================================
+const GST_STATE_CODES = {
+  "01": "Jammu & Kashmir", "02": "Himachal Pradesh", "03": "Punjab", "04": "Chandigarh",
+  "05": "Uttarakhand", "06": "Haryana", "07": "Delhi", "08": "Rajasthan",
+  "09": "Uttar Pradesh", "10": "Bihar", "19": "West Bengal", "24": "Gujarat",
+  "27": "Maharashtra", "29": "Karnataka", "32": "Kerala", "33": "Tamil Nadu",
+  "36": "Telangana", "37": "Andhra Pradesh"
+};
 
-  const [langText, setLangText] = useState("Vendor Apex Infotech PAN ABCDE1234F GSTIN 27AABCU9603R1ZM charged ₹45,000 for IT consulting services. Contact +91 9876543210.");
-  const [langResult, setLangResult] = useState(null);
-  const [langLoading, setLangLoading] = useState(false);
+function LoginView({ onLoginSuccess }) {
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const [agentInfo, setAgentInfo] = useState(null);
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    setError(null);
 
-  useEffect(() => {
-    fetch(`${API_BASE}/copilot/agent-info`)
-      .then((res) => res.json())
-      .then((data) => setAgentInfo(data))
-      .catch(console.error);
-  }, []);
-
-  const handleRagSearch = async () => {
-    try {
-      setRagLoading(true);
-      const res = await fetch(`${API_BASE}/modules/rag/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: ragQuery }),
-      });
-      if (res.ok) setRagResult(await res.json());
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setRagLoading(false);
-    }
-  };
-
-  const handleLangAnalyze = async () => {
-    try {
-      setLangLoading(true);
-      const res = await fetch(`${API_BASE}/modules/language/analyze`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: langText }),
-      });
-      if (res.ok) setLangResult(await res.json());
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLangLoading(false);
+    if (isSignUp) {
+      if (!username.trim() || !email.trim() || !password.trim()) {
+        setError("Please enter your Username, Email, and Password.");
+        return;
+      }
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_BASE}/auth/signup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: username.trim().toLowerCase(),
+            email: email.trim(),
+            password: password.trim(),
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          onLoginSuccess(data.user, data.token);
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          setError(errData.detail || "Registration failed. Please check your details.");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Network error: Unable to connect to authentication server.");
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      if (!identifier.trim() || !password.trim()) {
+        setError("Please enter your registered email or username, and password.");
+        return;
+      }
+      try {
+        setLoading(true);
+        const res = await fetch(`${API_BASE}/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: identifier.trim(), password }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          onLoginSuccess(data.user, data.token);
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          setError(errData.detail || "Invalid username/email or password.");
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Network error: Unable to connect to authentication server.");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   return (
-    <>
-      <div className="header-row">
-        <div>
-          <h1>AI-103 Microsoft Learn Azure AI Hub</h1>
-          <p className="subtitle">
-            Interactive demonstration of all 4 Microsoft Learn modules required for course evaluation.
-          </p>
-        </div>
-      </div>
+    <div className="auth-viewport">
+      <div className="auth-container">
+        {/* LEFT ENTERPRISE SHOWCASE PANE */}
+        <div className="auth-showcase-pane">
+          <div className="auth-showcase-glow" />
 
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
-        {[
-          { id: 1, title: "Module 1: Generative AI & RAG", icon: "🧠" },
-          { id: 2, title: "Module 2: AI Agents on Azure", icon: "🤖" },
-          { id: 3, title: "Module 3: Natural Language Solutions", icon: "💬" },
-          { id: 4, title: "Module 4: Visual Data Insights", icon: "👁️" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            className={`rate-pill ${activeTab === tab.id ? "active" : ""}`}
-            style={{ padding: "10px 18px", fontSize: "0.9rem" }}
-            onClick={() => setActiveTab(tab.id)}
+          <div>
+            {/* Branding Header */}
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 24 }}>
+              <img
+                src="/gstsaathilogo.jpeg"
+                alt="GSTSaathi Logo"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  objectFit: "cover",
+                  boxShadow: "0 8px 16px rgba(0, 0, 0, 0.4)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)"
+                }}
+              />
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <h2 style={{ fontSize: "1.4rem", fontWeight: 800, margin: 0, color: "#ffffff", letterSpacing: "-0.02em" }}>
+                    GSTSaathi
+                  </h2>
+                  <span
+                    style={{
+                      background: "rgba(99, 102, 241, 0.25)",
+                      color: "#a5b4fc",
+                      border: "1px solid rgba(165, 180, 252, 0.3)",
+                      padding: "2px 8px",
+                      borderRadius: "12px",
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase"
+                    }}
+                  >
+                    v1.0 Enterprise
+                  </span>
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "#94a3b8", marginTop: 2 }}>
+                  Autonomous Tax Intelligence & Statutory Compliance
+                </div>
+              </div>
+            </div>
+
+            {/* Value Proposition Highlights */}
+            <div style={{ marginTop: 28 }}>
+              <div className="auth-feature-card">
+                <div style={{ background: "rgba(99, 102, 241, 0.2)", padding: 8, borderRadius: 8, color: "#818cf8" }}>
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: "0.86rem", fontWeight: 700, color: "#f8fafc" }}>
+                    Multi-Invoice Document OCR
+                  </div>
+                  <div style={{ fontSize: "0.76rem", color: "#94a3b8", marginTop: 2 }}>
+                    Ingest single and multi-page PDFs with automatic line-item parsing via Azure AI.
+                  </div>
+                </div>
+              </div>
+
+              <div className="auth-feature-card">
+                <div style={{ background: "rgba(16, 185, 129, 0.2)", padding: 8, borderRadius: 8, color: "#34d399" }}>
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: "0.86rem", fontWeight: 700, color: "#f8fafc" }}>
+                    Statutory CGST RAG Grounding
+                  </div>
+                  <div style={{ fontSize: "0.76rem", color: "#94a3b8", marginTop: 2 }}>
+                    Verified legal answers grounded in CGST Act 2017 with official section citations.
+                  </div>
+                </div>
+              </div>
+
+              <div className="auth-feature-card">
+                <div style={{ background: "rgba(56, 189, 248, 0.2)", padding: 8, borderRadius: 8, color: "#38bdf8" }}>
+                  <Download size={18} />
+                </div>
+                <div>
+                  <div style={{ fontSize: "0.86rem", fontWeight: 700, color: "#f8fafc" }}>
+                    GSTN Portal Ready JSON Export
+                  </div>
+                  <div style={{ fontSize: "0.76rem", color: "#94a3b8", marginTop: 2 }}>
+                    One-click export of reconciled GSTR-3B filings formatted for official GST portal upload.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Badge Footer */}
+          <div style={{ paddingTop: 20, borderTop: "1px solid rgba(255, 255, 255, 0.1)", display: "flex", alignItems: "center", gap: 10 }}>
+            <CheckCircle2 size={16} color="#34d399" />
+            <span style={{ fontSize: "0.74rem", color: "#94a3b8" }}>
+              Enterprise Grade • Azure AI Foundry Powered • 256-bit Security
+            </span>
+          </div>
+        </div>
+
+        {/* RIGHT AUTH FORM PANE */}
+        <div className="auth-form-pane">
+          <div style={{ marginBottom: 24 }}>
+            <h3 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0f172a", margin: 0 }}>
+              {isSignUp ? "Create Enterprise Account" : "Sign In to GSTSaathi"}
+            </h3>
+            <p style={{ color: "#64748b", fontSize: "0.86rem", marginTop: 6 }}>
+              {isSignUp
+                ? "Register with your username, email, and password. Add your GSTIN anytime from your profile."
+                : "Enter your registered username or email to access your tax ledger and filings."}
+            </p>
+          </div>
+
+          {/* Segmented Switcher Tabs */}
+          <div
+            style={{
+              display: "flex",
+              background: "#f1f5f9",
+              borderRadius: 10,
+              padding: 4,
+              marginBottom: 24,
+              border: "1px solid #e2e8f0"
+            }}
           >
-            <span style={{ marginRight: 6 }}>{tab.icon}</span>
-            {tab.title}
-          </button>
-        ))}
+            <button
+              type="button"
+              className="auth-tab-btn"
+              style={{
+                background: !isSignUp ? "#ffffff" : "transparent",
+                color: !isSignUp ? "#4338ca" : "#64748b",
+                boxShadow: !isSignUp ? "0 2px 5px rgba(0,0,0,0.06)" : "none",
+              }}
+              onClick={() => {
+                setIsSignUp(false);
+                setError(null);
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              className="auth-tab-btn"
+              style={{
+                background: isSignUp ? "#ffffff" : "transparent",
+                color: isSignUp ? "#4338ca" : "#64748b",
+                boxShadow: isSignUp ? "0 2px 5px rgba(0,0,0,0.06)" : "none",
+              }}
+              onClick={() => {
+                setIsSignUp(true);
+                setError(null);
+              }}
+            >
+              Register (Sign Up)
+            </button>
+          </div>
+
+          {/* Error Banner */}
+          {error && (
+            <div
+              className="alert alert-danger"
+              style={{
+                marginBottom: 20,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                padding: "10px 14px",
+                borderRadius: 8,
+                fontSize: "0.85rem"
+              }}
+            >
+              <AlertCircle size={18} style={{ flexShrink: 0 }} />
+              <div>{error}</div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            {isSignUp ? (
+              <>
+                {/* Username Field */}
+                <div className="form-group" style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                    Account Username
+                  </label>
+                  <div className="auth-input-wrapper">
+                    <User size={16} className="auth-input-icon" />
+                    <input
+                      type="text"
+                      className="auth-input-field"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                      placeholder="e.g. jdoe_enterprise"
+                      required={isSignUp}
+                    />
+                  </div>
+                </div>
+
+                {/* Email Field */}
+                <div className="form-group" style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                    Taxpayer Email Address
+                  </label>
+                  <div className="auth-input-wrapper">
+                    <Mail size={16} className="auth-input-icon" />
+                    <input
+                      type="email"
+                      className="auth-input-field"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="e.g. name@company.com"
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Email or Username Field */}
+                <div className="form-group" style={{ marginBottom: 16 }}>
+                  <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                    Email Address or Username
+                  </label>
+                  <div className="auth-input-wrapper">
+                    <Mail size={16} className="auth-input-icon" />
+                    <input
+                      type="text"
+                      className="auth-input-field"
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder="Username or email address"
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Password Field with Show/Hide Toggle */}
+            <div className="form-group" style={{ marginBottom: 22 }}>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "#334155", marginBottom: 6 }}>
+                Account Password
+              </label>
+              <div className="auth-input-wrapper">
+                <Lock size={16} className="auth-input-icon" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="auth-input-field"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your account password"
+                  required
+                />
+                <button
+                  type="button"
+                  className="auth-eye-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                  tabIndex={-1}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Primary Submit Button */}
+            <button
+              type="submit"
+              className="button"
+              style={{
+                width: "100%",
+                padding: "13px",
+                fontSize: "0.94rem",
+                fontWeight: 600,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                borderRadius: 10,
+                background: "linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)",
+                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)"
+              }}
+              disabled={loading}
+            >
+              {loading ? (
+                <span>{isSignUp ? "Creating Enterprise Account..." : "Signing in..."}</span>
+              ) : (
+                <>
+                  <span>{isSignUp ? "Create Account & Sign In" : "Sign In to GSTSaathi"}</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          </form>
+        </div>
       </div>
-
-      {/* MODULE 1 */}
-      {activeTab === 1 && (
-        <div className="card">
-          <div className="header-row">
-            <div>
-              <h3>Module 1: Develop Generative AI Apps in Azure (RAG Pattern)</h3>
-              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>
-                Grounds LLM generations with statutory GST provisions and evaluates groundedness scores.
-              </p>
-            </div>
-            <span className="badge badge-primary">Azure OpenAI + RAG</span>
-          </div>
-
-          <div className="form-group" style={{ marginTop: 12 }}>
-            <label>User Compliance Query</label>
-            <input
-              type="text"
-              value={ragQuery}
-              onChange={(e) => setRagQuery(e.target.value)}
-              placeholder="e.g. Explain Section 17(5) blocked credits"
-            />
-          </div>
-
-          <button className="button" onClick={handleRagSearch} disabled={ragLoading}>
-            {ragLoading ? "Grounding with GST Acts..." : "Execute RAG Retrieval & Generation"}
-          </button>
-
-          {ragResult && (
-            <div style={{ marginTop: 20 }}>
-              <div className="alert alert-success">
-                <CheckCircle2 size={18} />
-                <div>
-                  <strong>Groundedness Evaluation: {ragResult.groundedness_evaluation.groundedness_score * 100}%</strong>
-                  <div style={{ fontSize: "0.82rem" }}>
-                    Hallucination Risk: {ragResult.groundedness_evaluation.hallucination_risk} | Safety: {ragResult.groundedness_evaluation.content_safety_status}
-                  </div>
-                </div>
-              </div>
-
-              <div className="receipt-card" style={{ marginBottom: 14 }}>
-                <strong>Retrieved Grounding Documents (Simulating Azure AI Search Index):</strong>
-                {ragResult.retrieved_statutory_context.map((d) => (
-                  <div key={d.id} style={{ marginTop: 8, fontSize: "0.85rem" }}>
-                    <code style={{ color: "#4338ca", fontWeight: 600 }}>[{d.id}] {d.title}</code>
-                    <p style={{ color: "#475569", marginTop: 2 }}>{d.text}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="card" style={{ background: "#f8fafc" }}>
-                <h4>Grounded Answer</h4>
-                <div style={{ fontSize: "0.9rem", marginTop: 8, whiteSpace: "pre-line" }}>
-                  {ragResult.grounded_response}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* MODULE 2 */}
-      {activeTab === 2 && (
-        <div className="card">
-          <div className="header-row">
-            <div>
-              <h3>Module 2: Develop AI Agents on Azure (Agent Service)</h3>
-              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>
-                Multi-tool compliance agent architecture utilizing Azure AI Foundry Agent Service.
-              </p>
-            </div>
-            <span className="badge badge-success">5 Registered Tools</span>
-          </div>
-
-          <div className="receipt-card" style={{ margin: "16px 0" }}>
-            <div className="receipt-row">
-              <span>Agent Name</span>
-              <strong>{agentInfo?.agent_name || "gst-tax-compliance-agent"}</strong>
-            </div>
-            <div className="receipt-row">
-              <span>Foundation Model</span>
-              <code>{agentInfo?.model || "gpt-4o"}</code>
-            </div>
-            <div className="receipt-row">
-              <span>SDK Service</span>
-              <span>Azure AI Foundry Projects SDK (azure-ai-projects)</span>
-            </div>
-            <div className="receipt-row">
-              <span>Execution State</span>
-              <span className="badge badge-success">Autonomous Tool Calling Active</span>
-            </div>
-          </div>
-
-          <h4>Registered Function Calling Tools (Declared in agent_tools.py):</h4>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
-            {agentInfo?.tools?.map((t, idx) => (
-              <div key={idx} style={{ padding: 12, border: "1px solid #e2e8f0", borderRadius: 8 }}>
-                <div className="header-row" style={{ marginBottom: 4 }}>
-                  <code style={{ color: "#4338ca", fontWeight: 700, fontSize: "0.95rem" }}>
-                    ⚙️ {t.function.name}
-                  </code>
-                  <span className="badge badge-primary">FunctionTool</span>
-                </div>
-                <p style={{ fontSize: "0.85rem", color: "#475569" }}>{t.function.description}</p>
-                <div style={{ fontSize: "0.78rem", color: "#94a3b8", marginTop: 4 }}>
-                  Required parameters: {t.function.parameters.required?.join(", ") || "None"}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginTop: 20 }}>
-            <Link to="/assistant" className="button">
-              Test Agent in AI Assistant Tab <ArrowRight size={15} />
-            </Link>
-          </div>
-        </div>
-      )}
-
-      {/* MODULE 3 */}
-      {activeTab === 3 && (
-        <div className="card">
-          <div className="header-row">
-            <div>
-              <h3>Module 3: Develop Natural Language Solutions in Azure</h3>
-              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>
-                Azure AI Language: Named Entity Recognition (NER), PII Masking, and Intent Classification.
-              </p>
-            </div>
-            <span className="badge badge-warning">PII Privacy Guard</span>
-          </div>
-
-          <div className="form-group" style={{ marginTop: 12 }}>
-            <label>Test Input Text (Contains PII like PAN and Phone)</label>
-            <textarea
-              rows={3}
-              value={langText}
-              onChange={(e) => setLangText(e.target.value)}
-            />
-          </div>
-
-          <button className="button" onClick={handleLangAnalyze} disabled={langLoading}>
-            {langLoading ? "Analyzing Text & Redacting PII..." : "Extract Entities & Redact PII"}
-          </button>
-
-          {langResult && (
-            <div style={{ marginTop: 20 }}>
-              <div className="alert alert-info">
-                <ShieldCheck size={18} />
-                <div>
-                  <strong>Responsible AI Privacy Protection (PII Redacted Text):</strong>
-                  <div style={{ fontSize: "0.9rem", marginTop: 4, fontFamily: "monospace" }}>
-                    "{langResult.redacted_text_for_privacy}"
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid-2" style={{ marginTop: 14 }}>
-                <div className="receipt-card">
-                  <strong>Detected Named Entities (Tax NER):</strong>
-                  {langResult.named_entities.map((e, idx) => (
-                    <div key={idx} className="receipt-row">
-                      <code>{e.text}</code>
-                      <span className="badge badge-primary">{e.category}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="receipt-card">
-                  <strong>Redacted PII Entities:</strong>
-                  {langResult.pii_detected.map((p, idx) => (
-                    <div key={idx} className="receipt-row">
-                      <code style={{ color: "#dc2626" }}>{p.text}</code>
-                      <span className="badge badge-warning">{p.category}</span>
-                    </div>
-                  ))}
-                  <div className="receipt-row total">
-                    <span>Classified Intent</span>
-                    <strong style={{ fontSize: "0.9rem" }}>{langResult.intent_classification.top_intent}</strong>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* MODULE 4 */}
-      {activeTab === 4 && (
-        <div className="card">
-          <div className="header-row">
-            <div>
-              <h3>Module 4: Extract Insights from Visual Data on Azure</h3>
-              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>
-                Azure AI Document Intelligence prebuilt-invoice model & OCR for line items and stamp detection.
-              </p>
-            </div>
-            <span className="badge badge-success">Document Intelligence</span>
-          </div>
-
-          <p style={{ fontSize: "0.9rem", color: "#475569", margin: "10px 0 16px" }}>
-            This module powers the <strong>Upload Invoice</strong> tab. When an invoice document (PDF or image) is processed, Azure Document Intelligence extracts fields with granular confidence scores:
-          </p>
-
-          <div className="receipt-card">
-            <div className="receipt-row">
-              <span>Document Intelligence Model</span>
-              <code>prebuilt-invoice</code>
-            </div>
-            <div className="receipt-row">
-              <span>InvoiceId Extraction Confidence</span>
-              <span className="badge badge-success">99% Confidence</span>
-            </div>
-            <div className="receipt-row">
-              <span>VendorTaxId (GSTIN) Validation</span>
-              <span className="badge badge-success">98% Confidence</span>
-            </div>
-            <div className="receipt-row">
-              <span>Subtotal & Tax Split Breakdown</span>
-              <span className="badge badge-success">98% Confidence</span>
-            </div>
-            <div className="receipt-row">
-              <span>Visual Stamp & Signature Verification</span>
-              <span className="badge badge-primary">Verified Detected</span>
-            </div>
-          </div>
-
-          <div style={{ marginTop: 20 }}>
-            <Link to="/upload" className="button">
-              Try Live Document Upload <ArrowRight size={15} />
-            </Link>
-          </div>
-        </div>
-      )}
-    </>
+    </div>
   );
 }
 
+// ==============================================================================
+// 8.1 USER PROFILE & GSTIN CONFIGURATION VIEW
+// ==============================================================================
+function ProfileView({ currentUser, onUserUpdate, onLogout }) {
+  const [profileData, setProfileData] = useState(null);
+  const [name, setName] = useState(currentUser?.name || "");
+  const [gstin, setGstin] = useState(currentUser?.gstin || "");
+  const [saving, setSaving] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [error, setError] = useState(null);
+
+  const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+  const isGstinValid = gstin.trim() ? GSTIN_REGEX.test(gstin.trim().toUpperCase()) : false;
+  const gstinState = gstin.length >= 2 ? (GST_STATE_CODES[gstin.slice(0, 2)] || `State Code ${gstin.slice(0, 2)}`) : null;
+
+  const loadProfile = async () => {
+    try {
+      const res = await authFetch(`${API_BASE}/profile`);
+      if (res.ok) {
+        const data = await res.json();
+        setProfileData(data);
+        if (data.user) {
+          setName(data.user.name || "");
+          setGstin(data.user.gstin || "");
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const handleSaveProfile = async (e) => {
+    if (e) e.preventDefault();
+    setMessage(null);
+    setError(null);
+
+    const cleanGstin = gstin.trim().toUpperCase();
+    if (cleanGstin && !isGstinValid) {
+      setError("Please enter a valid 15-digit GSTIN (e.g. 07BBBBB1111B2Z3) or leave it blank.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const res = await authFetch(`${API_BASE}/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim() || undefined,
+          gstin: cleanGstin || null,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        onUserUpdate(updated);
+        localStorage.setItem("gstsaathi_user", JSON.stringify(updated));
+        setMessage("Business profile and GSTIN updated successfully!");
+        loadProfile();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setError(errData.detail || "Failed to update profile.");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Network error: Unable to update profile.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleClearData = async () => {
+    if (!window.confirm("Are you sure you want to permanently clear all your ledger invoices and return filings? This cannot be undone.")) {
+      return;
+    }
+    try {
+      setClearing(true);
+      setMessage(null);
+      setError(null);
+      const res = await authFetch(`${API_BASE}/profile/data`, { method: "DELETE" });
+      if (res.ok) {
+        const data = await res.json();
+        setMessage(data.message || "Ledger data cleared successfully.");
+        loadProfile();
+      } else {
+        setError("Failed to clear ledger data.");
+      }
+    } catch (e) {
+      console.error(e);
+      setError("Network error while clearing data.");
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm("WARNING: Are you sure you want to permanently delete your account and all associated invoices? You will be immediately logged out.")) {
+      return;
+    }
+    try {
+      setDeleting(true);
+      const res = await authFetch(`${API_BASE}/profile/account`, { method: "DELETE" });
+      if (res.ok) {
+        alert("Your account and all associated data have been permanently deleted.");
+        onLogout();
+      } else {
+        setError("Failed to delete account.");
+      }
+    } catch (e) {
+      console.error(e);
+      setError("Network error while deleting account.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 960, margin: "0 auto", paddingBottom: 40 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: "1.75rem", fontWeight: 800 }}>Taxpayer Profile & Settings</h1>
+          <p style={{ color: "#64748b", fontSize: "0.9rem", marginTop: 4 }}>
+            Manage your business credentials, 15-digit GSTIN, and account data privacy.
+          </p>
+        </div>
+      </div>
+
+      {message && (
+        <div className="alert alert-success" style={{ marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
+          <CheckCircle2 size={18} />
+          <div>{message}</div>
+        </div>
+      )}
+
+      {error && (
+        <div className="alert alert-danger" style={{ marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
+          <AlertCircle size={18} />
+          <div>{error}</div>
+        </div>
+      )}
+
+      {/* Account Overview Stats */}
+      <div className="stats-grid" style={{ marginBottom: 24 }}>
+        <div className="card stat-card">
+          <div className="stat-header">
+            <span className="stat-label">Active GSTIN</span>
+            <Building2 size={18} color="#4f46e5" />
+          </div>
+          <div className="stat-value" style={{ fontSize: "1.15rem", fontFamily: "monospace" }}>
+            {currentUser?.gstin || "Not Configured"}
+          </div>
+          <div className="stat-sub">{currentUser?.name || currentUser?.username || "Enterprise"}</div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-header">
+            <span className="stat-label">Total Invoices</span>
+            <FileText size={18} color="#059669" />
+          </div>
+          <div className="stat-value">{profileData?.total_invoices ?? 0}</div>
+          <div className="stat-sub">Isolated to this account</div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-header">
+            <span className="stat-label">Recorded Turnover</span>
+            <TrendingUp size={18} color="#0284c7" />
+          </div>
+          <div className="stat-value">{formatINR(profileData?.total_taxable_amount || 0)}</div>
+          <div className="stat-sub">Cumulative base value</div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-header">
+            <span className="stat-label">Tax Liability</span>
+            <CalcIcon size={18} color="#d97706" />
+          </div>
+          <div className="stat-value">{formatINR(profileData?.total_tax_liability || 0)}</div>
+          <div className="stat-sub">CGST + SGST + IGST</div>
+        </div>
+      </div>
+
+      {/* Profile & GSTIN Settings Form */}
+      <div className="card" style={{ padding: "28px 30px", marginBottom: 24 }}>
+        <h3 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+          <Building2 size={18} color="#4338ca" /> Business Details & Statutory GSTIN
+        </h3>
+        <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 20 }}>
+          Add your 15-digit GSTIN so your OCR invoices, ledger reconciliation, and GSTR filings use your official tax identification.
+        </p>
+
+        <form onSubmit={handleSaveProfile}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 18 }}>
+            <div className="form-group">
+              <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155" }}>
+                Username (Account Identifier)
+              </label>
+              <input
+                type="text"
+                value={currentUser?.username || "taxpayer"}
+                disabled
+                style={{ background: "#f8fafc", color: "#64748b", cursor: "not-allowed" }}
+              />
+            </div>
+
+            <div className="form-group">
+              <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155" }}>
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={currentUser?.email || ""}
+                disabled
+                style={{ background: "#f8fafc", color: "#64748b", cursor: "not-allowed" }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
+            <div className="form-group">
+              <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155" }}>
+                Business / Taxpayer Name
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Apex Retail Enterprises"
+              />
+            </div>
+
+            <div className="form-group">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={{ fontSize: "0.82rem", fontWeight: 600, color: "#334155" }}>
+                  15-Digit GSTIN
+                </label>
+                <span style={{ fontSize: "0.72rem", color: "#64748b" }}>
+                  {gstin.length}/15 chars
+                </span>
+              </div>
+              <input
+                type="text"
+                value={gstin}
+                onChange={(e) => setGstin(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+                placeholder="e.g. 07BBBBB1111B2Z3"
+                maxLength={15}
+                style={{ textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "monospace" }}
+              />
+              {gstin.length > 0 && (
+                <div style={{ marginTop: 6, fontSize: "0.75rem", display: "flex", alignItems: "center", gap: 6 }}>
+                  {isGstinValid ? (
+                    <span style={{ color: "#059669", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                      <CheckCircle2 size={13} /> Valid GSTIN ({gstinState} • PAN: {gstin.slice(2, 12)})
+                    </span>
+                  ) : gstin.length === 15 ? (
+                    <span style={{ color: "#dc2626", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+                      <AlertCircle size={13} /> Invalid pattern (Expected 2 State Digits + 10 PAN + 3 Check chars)
+                    </span>
+                  ) : (
+                    <span style={{ color: "#64748b" }}>
+                      Enter 15 characters {gstinState ? `(${gstinState})` : ""}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="button"
+            disabled={saving}
+            style={{ padding: "10px 22px", fontSize: "0.88rem", fontWeight: 600 }}
+          >
+            {saving ? "Saving Changes..." : "Save Business Profile"}
+          </button>
+        </form>
+      </div>
+
+      {/* Data & Privacy Controls (Danger Zone) */}
+      <div className="card" style={{ padding: "28px 30px", border: "1px solid #fee2e2", background: "#fff" }}>
+        <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#dc2626", marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+          <AlertCircle size={18} color="#dc2626" /> Data Privacy & Account Controls
+        </h3>
+        <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: 20 }}>
+          Manage your data retention. You can clear your ledger entries while keeping your account, or permanently delete your account.
+        </p>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Clear Data Row */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "16px",
+              background: "#f8fafc",
+              borderRadius: 10,
+              border: "1px solid #e2e8f0"
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#0f172a" }}>Clear Ledger Invoices & Filings</div>
+              <div style={{ fontSize: "0.78rem", color: "#64748b", marginTop: 2 }}>
+                Permanently purge all uploaded invoices, extracted data, and return drafts for your account.
+              </div>
+            </div>
+            <button
+              type="button"
+              className="button button-outline button-sm"
+              onClick={handleClearData}
+              disabled={clearing}
+              style={{ color: "#d97706", borderColor: "#fde68a", whiteSpace: "nowrap" }}
+            >
+              {clearing ? "Clearing..." : "Delete Ledger Data"}
+            </button>
+          </div>
+
+          {/* Delete Account Row */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "16px",
+              background: "#fef2f2",
+              borderRadius: 10,
+              border: "1px solid #fecaca"
+            }}
+          >
+            <div>
+              <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#991b1b" }}>Delete Entire Account</div>
+              <div style={{ fontSize: "0.78rem", color: "#b91c1c", marginTop: 2 }}>
+                Permanently delete your user credentials and all associated invoices. This cannot be undone.
+              </div>
+            </div>
+            <button
+              type="button"
+              className="button button-sm"
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              style={{ background: "#dc2626", borderColor: "#dc2626", color: "#ffffff", whiteSpace: "nowrap" }}
+            >
+              {deleting ? "Deleting..." : "Delete Account"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 404 Fallback
 function NotFound() {
   return (
     <div style={{ textAlign: "center", padding: 60 }}>
       <h1>404 - Page Not Found</h1>
-      <p style={{ color: "#64748b", marginBottom: 20 }}>
-        The requested view does not exist.
-      </p>
-      <Link className="button" to="/">
+      <Link className="button" to="/" style={{ marginTop: 16 }}>
         Return to Dashboard
       </Link>
     </div>
   );
 }
 
-// ---------------------------------------------------------
-// Main App Component
-// ---------------------------------------------------------
+// ==============================================================================
+// 9. ROOT ROUTING & SESSION MANAGEMENT
+// ==============================================================================
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem("gstsaathi_user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const handleLoginSuccess = (user, token) => {
+    setCurrentUser(user);
+    try {
+      localStorage.setItem("gstsaathi_user", JSON.stringify(user));
+      if (token) localStorage.setItem("gstsaathi_token", token);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+    setCurrentUser(null);
+    try {
+      localStorage.removeItem("gstsaathi_user");
+      localStorage.removeItem("gstsaathi_token");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
-    <Layout>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/upload" element={<Upload />} />
-        <Route path="/calculator" element={<Calculator />} />
-        <Route path="/assistant" element={<Assistant />} />
-        <Route path="/review" element={<Review />} />
-        <Route path="/azure-modules" element={<AzureModulesView />} />
-        <Route path="/audit" element={<AuditView />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Layout>
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          currentUser ? (
+            <Navigate to="/" replace />
+          ) : (
+            <LoginView onLoginSuccess={handleLoginSuccess} />
+          )
+        }
+      />
+      <Route
+        path="/*"
+        element={
+          !currentUser ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <Layout currentUser={currentUser} onLogout={handleLogout}>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/calculator" element={<Calculator />} />
+                <Route path="/copilot" element={<AgentView />} />
+                {/* Alias /agent to /copilot for backward compatibility */}
+                <Route path="/agent" element={<Navigate to="/copilot" replace />} />
+                <Route path="/filing" element={<FilingView currentUser={currentUser} />} />
+                <Route path="/advisor" element={<LegalAdvisorView />} />
+                <Route path="/audit" element={<AuditView />} />
+                <Route path="/profile" element={<ProfileView currentUser={currentUser} onUserUpdate={(u) => setCurrentUser(u)} onLogout={handleLogout} />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          )
+        }
+      />
+    </Routes>
   );
 }
+

@@ -1,154 +1,249 @@
-# GST Copilot — Intelligent AI Tax Compliance Platform
-### Course Completion Project | AI-103 Programme | Chitkara University
+# GSTSaathi — Enterprise AI Tax Compliance Platform
+
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/Frontend-React%20%2B%20Vite-61DAFB.svg?logo=react&logoColor=black)](https://react.dev)
+[![Azure AI Foundry](https://img.shields.io/badge/AI-Azure%20AI%20Foundry-0078D4.svg?logo=microsoftazure&logoColor=white)](https://ai.azure.com)
+[![Azure Document Intelligence](https://img.shields.io/badge/OCR-Azure%20Document%20Intelligence-0078D4.svg?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/ai-services/ai-document-intelligence)
+[![Azure AI Search](https://img.shields.io/badge/RAG-Azure%20AI%20Search-0078D4.svg?logo=microsoftazure&logoColor=white)](https://azure.microsoft.com/en-us/products/ai-services/ai-search)
+
+**GSTSaathi** is an enterprise-grade, agentic AI tax platform designed to automate Indian Goods and Services Tax (GST) compliance. It integrates computer vision document ingestion, deterministic statutory tax calculations, multi-turn AI reasoning agents, grounded legal retrieval over the CGST Act, and automated GSTR-3B reconciliation with official GSTN JSON portal export.
 
 ---
 
-## 1. Project Title & Team Overview
-- **Project Title:** GST Copilot (GSTSaathi)
-- **Course:** AI-103: Designing and Implementing an Azure AI Solution
-- **Team Members:** [Add Member Names, Roll Numbers, and Group Details]
-- **Target Users:** Small and medium enterprises (MSMEs), tax consultants, and accountants in India.
+## Table of Contents
+1. [How to Run the Platform](#1-how-to-run-the-platform)
+2. [Environment Configuration (.env)](#2-environment-configuration-env)
+3. [Specialized AI Agents Architecture](#3-specialized-ai-agents-architecture)
+4. [Platform Modules & Capabilities](#4-platform-modules--capabilities)
+5. [Responsible AI & Governance](#5-responsible-ai--governance)
+6. [Testing & Verification](#6-testing--verification)
+7. [Project Structure](#7-project-structure)
 
 ---
 
-## 2. Problem Statement & Solution Overview
+## 1. How to Run the Platform
 
-### The Problem
-Indian Goods and Services Tax (GST) compliance is multi-tiered and complex:
-1. **Invoice Ingestion Bottlenecks:** Small businesses receive hundreds of paper/PDF invoices with varying formats, leading to manual entry errors.
-2. **Complex Tax Computations:** Confusion between Intra-State (CGST + SGST) vs Inter-State (IGST) supplies, correct rate slabs (0%, 5%, 12%, 18%, 28%), and cess.
-3. **Ineligible Input Tax Credit (ITC) Penalties:** Businesses inadvertently claim blocked credits under **Section 17(5)** (e.g. motor vehicles, personal catering), leading to 24% p.a. interest penalties under Section 50.
-4. **Filing Friction:** Reconciling ledger sales with GSTR-1 and GSTR-3B filings without pre-validation.
-
-### The AI-Driven Solution
-**GST Copilot** is an end-to-end intelligent compliance platform that automates invoice ingestion, extracts line-item tax metadata using AI Document Intelligence, validates GSTINs and HSN codes, checks Section 17(5) ITC eligibility, provides real-time GST advisory via an AI Copilot, and prepares GSTR draft returns with a mock submission workflow.
-
----
-
-## 3. Solution Architecture & Technical Data Flow
-
-```mermaid
-flowchart TD
-    User([Taxpayer / Business User]) -->|Uploads Invoices PDF/Images| Frontend[React + Vite Frontend]
-    User -->|Queries GST Regulations| Frontend
-    User -->|Simulates GSTR-3B Filing| Frontend
-
-    Frontend -->|Reverse Proxy /api/v1| Backend[FastAPI Backend Server]
-
-    subgraph Backend_Services [Backend Compliance Engine]
-        Backend --> IngestionSvc[Invoice Processing & OCR Service]
-        Backend --> CalcEngine[GST Calculation & HSN Engine]
-        Backend --> AICopilot[AI Legal & Compliance Copilot]
-        Backend --> FilingSvc[GSTR Filing & Reconciliation Service]
-    end
-
-    IngestionSvc -->|Extracts Metadata| DB[(SQLite / gst_copilot.db)]
-    AICopilot -->|Hooks to| AzureFoundry[Azure AI Foundry / Azure OpenAI]
-    AICopilot -->|Local Fallback| RuleEngine[GST Knowledge Base]
-    Backend_Services --> AuditLogs[(Audit Logs - Responsible AI)]
-    FilingSvc -->|Generates Mock ARN| User
-```
-
----
-
-## 4. Technology Stack & AI Services Used
-
-| Layer | Technologies | Role / AI-103 Concept |
-| :--- | :--- | :--- |
-| **Frontend** | React 19, Vite, Lucide Icons, React Router | Modern, responsive dashboard, real-time forms, and chat UI |
-| **Backend** | FastAPI (Python 3.13), Pydantic v2, Uvicorn | RESTful API, asynchronous request handling, schema validation |
-| **Database** | SQLite + SQLAlchemy ORM | Local compliance ledger (`invoices`, `filings`, `users`, `audit_logs`) |
-| **AI Ingestion** | Azure Document Intelligence *(Ready Hook)* + Simulation | Invoice field extraction (Invoice #, GSTINs, Taxable Base, Rate) |
-| **AI Advisory** | Azure AI Foundry / Azure OpenAI `gpt-4o` + Rule Engine | GST statutory query answering, Section 17(5) ITC evaluation |
-| **Responsible AI** | Audit Trail Table (`audit_logs`) | Traceability, fairness, transparency, and human-in-the-loop oversight |
-
----
-
-## 5. Setup & Running Instructions
-
-### Prerequisites
-- Python 3.10+ (Python 3.13 tested)
-- Node.js v18+ (v24 tested) & npm
-
-### Quick Start
-
-#### Step 1: Clone Repository
-```powershell
-git clone <repository-url>
-cd GSTSaathi
-```
-
-#### One-Click Launch (Recommended on Windows)
-Simply double-click **`start.bat`** in the project root, or run:
-```powershell
+### Option A: 1-Click Launch (Windows)
+In your terminal at the project root, run:
+```bat
 .\start.bat
 ```
-This automatically launches both the FastAPI backend (`http://localhost:8000`) and the Vite React frontend (`http://localhost:5173`) in their own windows!
+*(Or double-click `start.bat` in Windows File Explorer).*
 
-#### Manual Launch
+This script:
+1. Launches the **FastAPI backend** on `http://localhost:8001`.
+2. Launches the **React/Vite frontend** on `http://localhost:5173`.
+3. Automatically opens the dashboard in your default browser.
 
-**Terminal 1 (Backend):**
+---
+
+### Option B: Manual Startup
+
+#### 1. Start the Backend API
 ```powershell
-cd backend
-.\venv\Scripts\uvicorn.exe main:app --reload
+# From project root
+.\backend\venv\Scripts\python.exe -m uvicorn backend.main:app --reload --port 8001
 ```
 
-**Terminal 2 (Frontend):**
+#### 2. Start the Frontend Dashboard
 ```powershell
+# In a separate terminal
 cd frontend
 npm run dev
 ```
 
 ---
 
-## 5B. AI-103 Microsoft Learn 4-Module Mapping
-See full detailed curriculum mapping in [`docs/AI_103_MODULE_MAPPING.md`](file:///c:/Users/dilra/OneDrive/Desktop/GSTSaathi/docs/AI_103_MODULE_MAPPING.md):
-- **Module 1**: Develop generative AI apps in Azure (RAG pattern over GST Acts)
-- **Module 2**: Develop AI agents on Azure (Azure AI Foundry Agent with 5 Function Tools)
-- **Module 3**: Develop natural language solutions in Azure (PII Redaction & Tax NER)
-- **Module 4**: Extract insights from visual data on Azure (Document Intelligence `prebuilt-invoice`)
+### Service URLs
+| Service | URL | Description |
+| :--- | :--- | :--- |
+| **Frontend Web App** | [`http://localhost:5173`](http://localhost:5173) | Interactive compliance portal & dashboard |
+| **Interactive API Docs (Swagger)** | [`http://localhost:8001/docs`](http://localhost:8001/docs) | OpenAPI documentation & test console |
+| **Alternative API Docs (ReDoc)** | [`http://localhost:8001/redoc`](http://localhost:8001/redoc) | Clean statutory API reference |
 
 ---
 
-## 6. Testing & Results
+## 2. Environment Configuration (`.env`)
 
-A verification test suite is provided in [`tests/test_backend.py`](file:///c:/Users/dilra/OneDrive/Desktop/GSTSaathi/tests/test_backend.py).
+Create or update the `.env` file in the project root:
 
-### Run Test Suite:
+```ini
+# Server Configuration
+PORT=8001
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173
+
+# Azure Document Intelligence (OCR Agent)
+AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT=https://<your-doc-intelligence-resource>.cognitiveservices.azure.com/
+AZURE_DOCUMENT_INTELLIGENCE_KEY=<your-doc-intelligence-key>
+
+# Azure AI Foundry Agent Service (Tax Compliance Agent)
+PROJECT_ENDPOINT=https://<your-foundry-resource>.services.ai.azure.com/api/projects/<project-id>/protocols/openai/responses
+PROJECT_KEY=<your-foundry-api-key>
+MODEL_DEPLOYMENT_NAME=gpt-5-mini
+
+# Azure AI Search / Foundry IQ (Statutory Legal RAG Agent)
+AZURE_SEARCH_ENDPOINT=https://gstcopilotsearch2026.search.windows.net
+AZURE_SEARCH_KEY=<your-azure-search-key>
+AZURE_SEARCH_INDEX=gst-knowledge-base
+```
+
+---
+
+## 3. Specialized AI Agents Architecture
+
+GSTSaathi is powered by three specialized AI agents working together with backend database ledgers:
+
+```
+                  ┌────────────────────────────────────────────────────────┐
+                  │                    GSTSaathi Platform                  │
+                  └──────────────────────────┬─────────────────────────────┘
+                                             │
+             ┌───────────────────────────────┼───────────────────────────────┐
+             ▼                               ▼                               ▼
+ ┌───────────────────────┐       ┌───────────────────────┐       ┌───────────────────────┐
+ │ gst-document-ocr-agent│       │gst-tax-compliance-agent│       │ gst-rag-advisory-agent│
+ ├───────────────────────┤       ├───────────────────────┤       ├───────────────────────┤
+ │ Azure Doc Intelligence│       │ Azure AI Foundry      │       │ Foundry IQ & Search   │
+ │ Model: prebuilt-invoice│       │ Model: gpt-5-mini     │       │ Index: gst-knowledge  │
+ ├───────────────────────┤       ├───────────────────────┤       ├───────────────────────┤
+ │ • PDF/Image Ingestion │       │ • Multi-turn Memory   │       │ • CGST Act Grounding  │
+ │ • Line Item Parsing   │       │ • Live Ledger Context │       │ • Section Citations   │
+ │ • GSTIN Fallback Regex│       │ • 5 Function Tools    │       │ • Groundedness Scoring│
+ └───────────────────────┘       └───────────────────────┘       └───────────────────────┘
+```
+
+### 1. `gst-tax-compliance-agent`
+- **Role:** Autonomous GST compliance reasoning and advisory.
+- **Technology:** Microsoft Azure AI Foundry Agent Service & Azure OpenAI (`gpt-5-mini`).
+- **Capabilities:**
+  - Analyzes tax queries with multi-turn conversational context memory.
+  - Automatically grounded in the authenticated user's live SQLite ledger (gross turnover, invoices, CGST/SGST/IGST, ITC).
+  - Never hallucinates fake GST filing confirmations or ARN numbers.
+  - Equipped with **5 Statutory Backend Function Tools**:
+    1. `calculate_gst`: Deterministic CGST/SGST/IGST tax calculation and cess.
+    2. `validate_gstin`: Statutory 15-character Indian GSTIN structure and PAN verification.
+    3. `lookup_hsn`: Official GST tariff directory and rate lookup by 4-digit HSN/SAC code.
+    4. `check_itc_eligibility`: Section 16 eligibility and Section 17(5) blocked credit evaluation.
+    5. `get_ledger_summary`: Dynamic invoice ledger retrieval and 4-point audit reconciliation.
+
+### 2. `gst-document-ocr-agent`
+- **Role:** Document intelligence and multi-invoice extraction.
+- **Technology:** Azure AI Document Intelligence (`prebuilt-invoice` model).
+- **Capabilities:**
+  - Extracts vendor/customer names, addresses, dates, taxable subtotal, and grand total.
+  - Supports batch multi-file drag-and-drop and multi-invoice documents in a single file.
+  - Robust regex fallbacks for Indian GSTINs (`\b[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}\b`), invoice numbers, and dates.
+  - Automated place-of-supply classification (intra-state CGST+SGST vs. inter-state IGST).
+
+### 3. `gst-rag-advisory-agent`
+- **Role:** Statutory legal retrieval and CGST Act grounding.
+- **Technology:** Azure AI Search (`gstcopilotsearch2026`), Foundry IQ (`gst-knowledge-base`), Azure Blob Storage.
+- **Capabilities:**
+  - Answers complex GST statutory questions with direct citations to Acts, Rules, and notifications.
+  - Computes groundedness confidence evaluation (0–100%) and content safety status.
+  - Operates on demand strictly when the user triggers a query to conserve AI tokens.
+
+---
+
+## 4. Platform Modules & Capabilities
+
+### 1. Smart Document Ingestion & Invoice Ledger
+- Upload single or multiple invoice PDFs/images at once.
+- Invoices are parsed, validated, and saved into an isolated SQLite ledger per authenticated user.
+- Human-in-the-loop review override before return filing.
+
+### 2. GST Tax Calculator & HSN Directory
+- Fast statutory tax computation for intra-state (50% CGST + 50% SGST) and inter-state (100% IGST) supplies.
+- Instant tariff lookup for 4-digit HSN/SAC codes (e.g. 9983 IT services, 8471 computers, 8703 motor vehicles).
+
+### 3. GSTR-3B Return Filing & Reconciliation
+- Aggregates included invoices, gross taxable turnover, outward tax liability, eligible ITC, and Section 17(5) blocked ITC.
+- **4-Point Statutory Audit Checklist:**
+  1. *Invoice Reconciliation*: Mathematical base + tax match against invoice grand totals.
+  2. *GSTIN Structural Validation*: 15-character statutory format verification.
+  3. *Section 17(5) ITC Rules*: Automatic segregation of blocked input credits (vehicles, food, etc.).
+  4. *CGST + SGST vs. IGST Calculation*: Rate and place-of-supply consistency.
+- **Download Official GST Portal JSON**: Exports a GSTN-compliant JSON file (`GSTR3B_<period>_<gstin>.json`) formatted for direct upload to `gst.gov.in`.
+
+### 4. Autonomous AI Tax Saathi (`/copilot`)
+- Natural-language tax assistant with real-time reasoning thoughts (`agent_thought`) and executed tool telemetry.
+- Grounded directly with your active database ledger.
+
+### 5. Statutory Legal Advisor (`/advisor`)
+- Direct legal grounding over the CGST Act, 2017.
+- Displays excerpted provisions, section titles, and source documents.
+
+### 6. Enterprise Audit Trail (`/audit`)
+- Immutable, chronological audit log capturing every OCR ingestion, GST calculation, AI reasoning execution, and filing override.
+- Search and filter by agent type, event type, or reference ID.
+
+### 7. User Profile & Data Isolation
+- User accounts are fully isolated: User A cannot see, modify, or delete User B's invoices or returns.
+- Configure your business name and 15-digit GSTIN.
+- Privacy controls to clear ledger data or permanently delete accounts.
+
+---
+
+## 5. Responsible AI & Governance
+
+GSTSaathi is engineered in accordance with Microsoft Responsible AI standards:
+- **Privacy & Data Rights**: Strict multi-tenant user isolation. Full self-service data erasure and account deletion compliant with DPDP/GDPR.
+- **Reliability & Determinism**: AI never guesses tax numbers. All tax calculations and rate splits are computed deterministically in backend Python code; the SQLite ledger is the single source of truth.
+- **Anti-Hallucination**: Explicit guardrails prevent generating fake filing confirmations or ARN numbers.
+- **Transparency**: Live `agent_thought` reasoning telemetry, visible tool execution badges, and grounded statutory citations with confidence scores.
+- **Human Oversight**: Returns are never filed autonomously; human review and manual confirmation are strictly required before submission.
+- **Auditability**: Immutable chronological audit trail recording all OCR, calculation, AI, and human actions.
+
+---
+
+## 6. Testing & Verification
+
+Run the automated test suites using the project's virtual environment:
+
 ```powershell
+# 1. Feature Verification Suite (Auth, isolation, JSON export, multi-invoice upload)
+.\backend\venv\Scripts\python.exe tests\test_features.py
+
+# 2. Foundry Agent Test Suite (5 function tools & /copilot/query endpoint)
+.\backend\venv\Scripts\python.exe tests\test_foundry_agent.py
+
+# 3. Statutory Legal RAG Advisory Test Suite
+.\backend\venv\Scripts\python.exe tests\test_rag_agent.py
+
+# 4. Core Backend API Test Suite
 .\backend\venv\Scripts\python.exe tests\test_backend.py
 ```
 
-### Verified Test Cases:
-1. **Intra-State Calculation**: Accurate 50/50 split between CGST and SGST.
-2. **Inter-State Calculation**: 100% assignment to IGST.
-3. **GSTIN Structural Validation**: 15-character regex structure, state code and PAN verification.
-4. **HSN Directory Lookup**: Rate retrieval for standard industry codes.
-5. **Responsible AI Section 17(5) Check**: Correctly flags motor vehicles and personal catering as blocked ITC.
-6. **AI Domain Advisory Engine**: Instant, accurate guidance on rates, due dates, and compliance rules.
-7. **Database Persistence**: SQLite storage of invoices, filing drafts, and audit trails.
-8. **Mock Filing Lifecycle**: GSTR return aggregation and valid ARN (Application Reference Number) generation.
+---
+
+## 7. Project Structure
+
+```
+GSTSaathi/
+├── backend/
+│   ├── main.py              # FastAPI server, endpoints, and authentication
+│   ├── models.py            # SQLite ORM models, schemas, and demo seed
+│   ├── gst_calculator.py    # Statutory tax calculations & GSTR-3B audit logic
+│   └── agent.py             # Azure AI Foundry Agent, OCR & RAG integrations
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx          # Complete single-page application & dashboard
+│   │   ├── App.css          # Unified enterprise stylesheet
+│   │   ├── index.css        # Typography and CSS reset
+│   │   └── main.jsx         # React application root
+│   ├── package.json         # Frontend dependencies (React, Vite, Lucide)
+│   └── vite.config.js       # Vite development and build configuration
+├── tests/
+│   ├── test_features.py     # End-to-end feature verification suite
+│   ├── test_foundry_agent.py# Azure AI Foundry agent and tools test suite
+│   ├── test_rag_agent.py    # Statutory RAG grounding verification
+│   └── test_backend.py      # Core backend API unit tests
+├── .env                     # Live Azure credentials and configuration
+├── start.bat                # 1-click startup batch script
+└── README.md                # Project documentation and user guide
+```
 
 ---
 
-## 7. Responsible AI & Human Oversight (AI-103)
+*GSTSaathi — Built with Microsoft Azure AI Foundry, Azure Document Intelligence, and FastAPI.*
 
-In accordance with Microsoft Responsible AI guidelines:
-- **Transparency & Explainability:** The AI Assistant cites specific statutory sections (e.g. CGST Section 16, Section 17(5), Section 10).
-- **Human Oversight (Human-in-the-Loop):** Invoices extracted by AI can be reviewed, edited, or marked as approved via the `PATCH /api/v1/invoices/{id}/status` endpoint before filing.
-- **Auditability:** Every AI extraction, human review action, and filing draft is recorded in the `audit_logs` table for compliance tracking.
-- **Privacy & Safety:** No sensitive credentials or government portal secrets are required or stored in git.
-
----
-
-## 8. Known Limitations & Future Scope
-
-- **Live GSTN Integration:** The return filing is a mock demonstration generating simulated ARNs; live connection requires a GST Suvidha Provider (GSP) sandbox license.
-- **Azure AI Foundry Direct Hook:** Configuration keys (`AZURE_OPENAI_KEY`, `AZURE_DOCUMENT_INTELLIGENCE_KEY`) can be plugged into `.env` when the Azure for Students benefit is activated.
-- **Multi-tenant Authentication:** Future iterations will support multi-organization tenant separation and role-based access control (RBAC).
-
----
-
-## 9. Acknowledgments
-- **Course Instructors:** Chitkara University AI-103 Instructional Team & INBIOT.
-- **Open Source Libraries:** FastAPI, SQLAlchemy, React, Vite, Lucide React, Pydantic.
