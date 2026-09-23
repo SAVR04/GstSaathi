@@ -1,0 +1,15 @@
+{
+  "section": "16",
+  "act": "Central Goods and Services Tax Act, 2017",
+  "title": "Eligibility and Conditions for Taking Input Tax Credit",
+  "keywords": ["section 16", "conditions to claim", "eligibility", "claim itc", "time limit", "gstr-2b", "gstr-3b", "input tax credit"],
+  "summary": "Every registered person shall, subject to such conditions and restrictions as may be prescribed, be entitled to take credit of input tax charged on any supply of goods or services or both which are used or intended to be used in the course or furtherance of his business.",
+  "mandatory_conditions": [
+    "Tax invoice or debit note issued by a registered supplier must be in possession.",
+    "Goods or services or both have been received by the taxpayer.",
+    "Tax charged in respect of supply has been actually paid to the Government by the supplier (reflected in GSTR-2B).",
+    "Return under section 39 (GSTR-3B) has been furnished."
+  ],
+  "time_limit": "30th day of November following the end of financial year or date of furnishing annual return, whichever is earlier."
+}
+

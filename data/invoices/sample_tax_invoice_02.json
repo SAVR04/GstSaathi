@@ -1,0 +1,32 @@
+{
+  "invoice_number": "INV-2026-002",
+  "invoice_date": "2026-09-12",
+  "seller_name": "Prestige Motors Dealership",
+  "seller_gstin": "06AAAAA9999C1Z8",
+  "buyer_name": "Apex Retail Enterprises",
+  "buyer_gstin": "07BBBBB1111B2Z3",
+  "transaction_type": "inter_state",
+  "place_of_supply": "Delhi (07)",
+  "line_items": [
+    {
+      "description": "Executive motor car for director personal travel",
+      "hsn_code": "8703",
+      "quantity": 1,
+      "unit_price": 1200000.0,
+      "taxable_amount": 1200000.0,
+      "gst_rate": 28.0,
+      "cgst": 0.0,
+      "sgst": 0.0,
+      "igst": 336000.0
+    }
+  ],
+  "taxable_amount": 1200000.0,
+  "cgst": 0.0,
+  "sgst": 0.0,
+  "igst": 336000.0,
+  "total_tax": 336000.0,
+  "grand_total": 1536000.0,
+  "itc_eligible": false,
+  "itc_statutory_basis": "Blocked Credit under CGST Act Section 17(5)(a): Motor vehicles for transport of persons having approved seating capacity of not more than 13 persons are ineligible."
+}
+

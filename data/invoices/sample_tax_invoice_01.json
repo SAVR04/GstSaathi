@@ -1,0 +1,32 @@
+{
+  "invoice_number": "INV-2026-001",
+  "invoice_date": "2026-09-10",
+  "seller_name": "CloudTech Solutions Private Limited",
+  "seller_gstin": "07AAAAA0000A1Z5",
+  "buyer_name": "Apex Retail Enterprises",
+  "buyer_gstin": "07BBBBB1111B2Z3",
+  "transaction_type": "intra_state",
+  "place_of_supply": "Delhi (07)",
+  "line_items": [
+    {
+      "description": "Cloud hosting and software consulting services",
+      "hsn_code": "9983",
+      "quantity": 1,
+      "unit_price": 50000.0,
+      "taxable_amount": 50000.0,
+      "gst_rate": 18.0,
+      "cgst": 4500.0,
+      "sgst": 4500.0,
+      "igst": 0.0
+    }
+  ],
+  "taxable_amount": 50000.0,
+  "cgst": 4500.0,
+  "sgst": 4500.0,
+  "igst": 0.0,
+  "total_tax": 9000.0,
+  "grand_total": 59000.0,
+  "itc_eligible": true,
+  "itc_statutory_basis": "Eligible for full Input Tax Credit under CGST Act Section 16 (in furtherance of business)."
+}
+

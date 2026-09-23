@@ -1,0 +1,35 @@
+{
+  "section": "17(5)",
+  "act": "Central Goods and Services Tax Act, 2017",
+  "title": "Blocked Input Tax Credit (Ineligible Credits)",
+  "keywords": ["section 17", "17(5)", "blocked", "motor vehicle", "food", "beverage", "catering", "club", "membership", "personal consumption", "ineligible", "blocked credits"],
+  "summary": "Notwithstanding anything contained in sub-section (1) of section 16 and subsection (1) of section 18, input tax credit shall not be available in respect of specified supplies.",
+  "blocked_categories": [
+    {
+      "clause": "17(5)(a)",
+      "category": "Motor Vehicles",
+      "description": "Motor vehicles for transportation of persons having approved seating capacity of up to 13 persons (including the driver), except when used for making taxable supplies of further supply of such vehicles, transportation of passengers, or imparting training on driving.",
+      "keywords": ["motor car", "vehicle", "car purchase", "passenger transport"]
+    },
+    {
+      "clause": "17(5)(b)(i)",
+      "category": "Food, Beverages & Catering",
+      "description": "Supply of food and beverages, outdoor catering, beauty treatment, health services, cosmetic and plastic surgery, unless inward supply of goods/services is used by a registered person for making an outward taxable supply of the same category.",
+      "keywords": ["food", "beverage", "catering", "buffet", "lunch", "dinner", "restaurant"]
+    },
+    {
+      "clause": "17(5)(b)(ii)",
+      "category": "Memberships & Wellness",
+      "description": "Membership of a club, health and fitness centre.",
+      "keywords": ["club", "gym", "health club", "fitness centre", "club membership"]
+    },
+    {
+      "clause": "17(5)(g)",
+      "category": "Personal Consumption",
+      "description": "Goods or services or both used for personal consumption.",
+      "keywords": ["personal", "personal use", "gift", "employee gift"]
+    }
+  ],
+  "consequence_of_wrong_claim": "24% per annum interest liability under CGST Act Section 50(3) plus 100% penalty under Section 122 for willful misstatement."
+}
+

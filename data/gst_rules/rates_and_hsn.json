@@ -1,0 +1,21 @@
+{
+  "section": "Rates & HSN Directory",
+  "act": "Central Goods and Services Tax Act, 2017",
+  "title": "Standard GST Rates and HSN/SAC Directory",
+  "keywords": ["rate", "hsn", "sac", "slab", "tax slab", "gst rate", "rates"],
+  "slabs": [
+    {"rate": 0.0, "category": "Exempt / Nil Rated", "examples": "Fresh milk, unprocessed grain, salt"},
+    {"rate": 5.0, "category": "Essential Goods / Economy Services", "examples": "Packaged food, footwear < ₹1000, economy air travel"},
+    {"rate": 12.0, "category": "Standard Rate S1", "examples": "Apparel > ₹1000, processed foods, computers"},
+    {"rate": 18.0, "category": "Standard Rate S2 (Default Services)", "examples": "IT software, telecom, consulting, financial services"},
+    {"rate": 28.0, "category": "Luxury / Sin Goods", "examples": "Motor cars, aerated drinks, tobacco, luxury items"}
+  ],
+  "common_hsn": [
+    {"code": "9983", "description": "IT & Software Consulting Services", "rate": 18.0},
+    {"code": "8471", "description": "Computers & Data Processing Hardware", "rate": 18.0},
+    {"code": "8517", "description": "Smartphones & Telecommunication Equipment", "rate": 18.0},
+    {"code": "6203", "description": "Men's Apparel & Garments", "rate": 12.0},
+    {"code": "8703", "description": "Motor Vehicles & Luxury Passenger Cars", "rate": 28.0, "cess": 15.0}
+  ]
+}
+
